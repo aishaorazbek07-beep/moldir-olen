@@ -1,4 +1,4 @@
-export const VOTE_PRICE = 200;
+export const VOTE_PRICE = 500;
 export const MAX_VOTES_PER_PAYMENT = 99;
 
 export const APPLICATION_FEE = 30_000;
