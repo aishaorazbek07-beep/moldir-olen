@@ -13,8 +13,18 @@ export async function POST(req: Request) {
   const secret = process.env.ADMIN_SESSION_SECRET ?? '';
 
   if (!expected || !secret) {
+    // Называем недостающее поимённо: иначе непонятно, что чинить, и легко
+    // принять это за «неверный пароль».
+    const missing = [!expected && 'ADMIN_PASSWORD', !secret && 'ADMIN_SESSION_SECRET']
+      .filter(Boolean)
+      .join(' и ');
+
     return NextResponse.json(
-      { error: 'Админка не настроена: задайте ADMIN_PASSWORD и ADMIN_SESSION_SECRET' },
+      {
+        error:
+          `Админка не настроена: на сервере не задана переменная ${missing}. ` +
+          'Добавьте её в Vercel → Settings → Environment Variables и сделайте Redeploy.',
+      },
       { status: 500 },
     );
   }
