@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { APPLICATION_DEADLINE, APPLICATION_FEE } from '@/lib/config';
 import { tenge } from '@/lib/format';
+import { normalizePhone } from '@/lib/phone';
 import { Reveal } from './Reveal';
 import { FailScreen, PhoneField, Sheet, WaitingScreen } from './Sheet';
 import { TEST_MODE, usePayment } from './usePayment';
@@ -12,7 +13,7 @@ export function ApplySection() {
   const [birthYear, setBirthYear] = useState('');
   const [region, setRegion] = useState('');
   const [resume, setResume] = useState('');
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState('+7 ');
   const [localError, setLocalError] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -29,8 +30,10 @@ export function ApplySection() {
       setLocalError('Туған жылыңызды енгізіңіз');
       return;
     }
-    if (phone.trim().length === 0) {
-      setLocalError('Kaspi нөміріңізді енгізіңіз');
+    // Проверяем нормализацией, а не длиной: поле никогда не пустое — в нём
+    // всегда есть «+7».
+    if (!normalizePhone(phone)) {
+      setLocalError('Kaspi нөміріңізді толық енгізіңіз');
       return;
     }
 

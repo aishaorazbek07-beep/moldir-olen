@@ -11,7 +11,7 @@ export function TicketSection() {
   const railRef = useRef<HTMLDivElement>(null);
   const [show, setShow] = useState<ShowConfig | null>(null);
   const [qty, setQty] = useState(1);
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState('+7 ');
 
   const payment = usePayment();
 

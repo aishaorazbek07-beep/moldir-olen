@@ -14,7 +14,7 @@ export function VoteSection({ initialTeams }: { initialTeams: TeamWithStats[] })
   const [teams, setTeams] = useState(initialTeams);
   const [activeTeam, setActiveTeam] = useState<TeamWithStats | null>(null);
   const [qty, setQty] = useState(1);
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState('+7 ');
 
   const payment = usePayment();
 

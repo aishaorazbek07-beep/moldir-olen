@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { formatPhoneInput } from '@/lib/phone';
 
 /**
  * Нижняя шторка. На широких экранах CSS ставит её по центру.
@@ -54,6 +55,10 @@ export function Sheet({
   );
 }
 
+/**
+ * Поле номера с постоянным «+7»: код страны не нужно набирать и нельзя стереть,
+ * пробелы расставляются сами. Меньше поводов ввести номер в неверном виде.
+ */
 export function PhoneField({
   value,
   onChange,
@@ -69,12 +74,17 @@ export function PhoneField({
       <input
         id="kaspi-phone"
         type="tel"
-        inputMode="tel"
+        inputMode="numeric"
         autoComplete="tel"
         placeholder="+7 700 123 45 67"
         value={value}
         disabled={disabled}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => onChange(formatPhoneInput(e.target.value))}
+        onFocus={(e) => {
+          // Курсор всегда в конец, чтобы нельзя было начать печатать внутри «+7».
+          const el = e.currentTarget;
+          requestAnimationFrame(() => el.setSelectionRange(el.value.length, el.value.length));
+        }}
       />
       <p className="phone-hint">Шот осы нөмірдің Kaspi қосымшасына жіберіледі.</p>
     </div>
