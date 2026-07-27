@@ -163,6 +163,27 @@ describe('POST /api/webhooks/apipay', () => {
     expect(state.votes).toHaveLength(0);
   });
 
+  it('кнопка «Тест вебхука» из кабинета даёт понятный успех', async () => {
+    const res = await POST(
+      webhookRequest({
+        event: 'webhook.test',
+        invoice: { id: 0, status: 'test', amount: '0.00' },
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({ outcome: 'test_ok' });
+    expect(state.votes).toHaveLength(0);
+  });
+
+  it('тестовое событие с чужой подписью всё равно отклоняется', async () => {
+    const res = await POST(
+      webhookRequest({ event: 'webhook.test', invoice: { status: 'test' } }, 'sha256=00'),
+    );
+
+    expect(res.status).toBe(401);
+  });
+
   it('битый JSON с верной подписью отклоняется', async () => {
     const raw = '{не json';
     const req = new Request('https://example.kz/api/webhooks/apipay', {

@@ -50,6 +50,21 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'invalid json' }, { status: 400 });
   }
 
+  // Кнопка «Тест вебхука» в кабинете ApiPay шлёт выдуманный счёт со status=test.
+  // Отвечаем явным успехом, чтобы в журнале было видно: адрес и секрет верны.
+  if (payload.event === 'webhook.test' || payload.invoice?.status === 'test') {
+    await safeLog({
+      event: payload.event ?? 'webhook.test',
+      externalOrderId: null,
+      invoiceStatus: 'test',
+      signatureValid: true,
+      outcome: 'test_ok',
+      payload,
+    });
+
+    return NextResponse.json({ ok: true, outcome: 'test_ok' });
+  }
+
   const invoice = payload.invoice;
   const externalOrderId = invoice?.external_order_id ?? null;
 

@@ -184,6 +184,46 @@ export async function loadRecentPayments(limit = 40): Promise<AdminPaymentRow[]>
   }));
 }
 
+export interface WebhookEventRow {
+  id: number;
+  event: string | null;
+  invoiceStatus: string | null;
+  signatureValid: boolean;
+  outcome: string | null;
+  receivedAt: string;
+}
+
+/**
+ * Последние входящие webhook'и. Нужны при настройке: сразу видно, доходят ли
+ * уведомления вообще и сходится ли подпись.
+ */
+export async function loadWebhookEvents(limit = 20): Promise<WebhookEventRow[]> {
+  const rows = await sql<
+    Array<{
+      id: number;
+      event: string | null;
+      invoice_status: string | null;
+      signature_valid: boolean;
+      outcome: string | null;
+      received_at: Date;
+    }>
+  >`
+    select id, event, invoice_status, signature_valid, outcome, received_at
+    from webhook_events
+    order by received_at desc
+    limit ${limit}
+  `;
+
+  return rows.map((r) => ({
+    id: r.id,
+    event: r.event,
+    invoiceStatus: r.invoice_status,
+    signatureValid: r.signature_valid,
+    outcome: r.outcome,
+    receivedAt: r.received_at.toISOString(),
+  }));
+}
+
 export async function loadAdjustments(limit = 60): Promise<AdjustmentRow[]> {
   const rows = await sql<Array<{ id: number; delta: number; created_at: Date; name: string }>>`
     select a.id, a.delta, a.created_at, t.name

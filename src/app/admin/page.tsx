@@ -6,6 +6,7 @@ import {
   loadApplications,
   loadRecentPayments,
   loadSummary,
+  loadWebhookEvents,
 } from '@/lib/admin-data';
 import { isAdmin } from '@/lib/admin-guard';
 import { paymentsMode } from '@/lib/config';
@@ -31,13 +32,18 @@ const KIND_LABEL: Record<string, string> = {
 export default async function AdminPage() {
   if (!(await isAdmin())) redirect('/admin/login');
 
-  const [summary, teams, payments, adjustments, applications] = await Promise.all([
+  const [summary, teams, payments, adjustments, applications, webhooks] = await Promise.all([
     loadSummary(),
     loadAdminTeams(),
     loadRecentPayments(),
     loadAdjustments(),
     loadApplications(),
+    loadWebhookEvents(),
   ]);
+
+  // Само значение секрета наружу не выводим — только факт, задан он или нет.
+  const webhookSecretSet = Boolean(process.env.APIPAY_WEBHOOK_SECRET);
+  const webhookUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/api/webhooks/apipay`;
 
   const mode = paymentsMode();
   const MODE_LABEL: Record<string, string> = {
@@ -109,6 +115,57 @@ export default async function AdminPage() {
                       ? `${Math.round((row.paidCount / row.startedCount) * 100)}%`
                       : '—'}
                   </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <h2>Webhook от ApiPay</h2>
+      {webhookSecretSet ? null : (
+        <p className="admin-note" style={{ color: '#FF9BC4' }}>
+          <b>APIPAY_WEBHOOK_SECRET не задан.</b> Пока он пуст, все уведомления от ApiPay
+          отклоняются с кодом 401, и оплаты не будут засчитываться. Секрет выдаётся при
+          создании webhook&apos;а в кабинете: Настройки → Подключение.
+        </p>
+      )}
+      <p className="admin-note">
+        Адрес уведомлений для кабинета ApiPay: <code>{webhookUrl}</code>
+        <br />
+        Секрет подписи: {webhookSecretSet ? 'задан ✓' : 'не задан ✗'}. Проверить связь можно
+        кнопкой «Тест вебхука» в кабинете (Настройки → API-ключи) — ниже появится строка с
+        событием <code>webhook.test</code> и результатом <code>test_ok</code>.
+      </p>
+      {webhooks.length === 0 ? (
+        <p className="admin-empty">
+          Уведомлений пока не приходило. Если оплаты проходят, а здесь пусто — проверьте адрес
+          уведомлений в кабинете ApiPay.
+        </p>
+      ) : (
+        <div className="table-wrap">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Когда</th>
+                <th>Событие</th>
+                <th>Статус счёта</th>
+                <th>Подпись</th>
+                <th>Результат</th>
+              </tr>
+            </thead>
+            <tbody>
+              {webhooks.map((w) => (
+                <tr key={w.id}>
+                  <td>{dateTime(w.receivedAt)}</td>
+                  <td>{w.event ?? '—'}</td>
+                  <td>{w.invoiceStatus ?? '—'}</td>
+                  <td>
+                    <span className={`pill ${w.signatureValid ? 'paid' : 'bad'}`}>
+                      {w.signatureValid ? 'верна' : 'НЕ СОШЛАСЬ'}
+                    </span>
+                  </td>
+                  <td>{w.outcome ?? '—'}</td>
                 </tr>
               ))}
             </tbody>
