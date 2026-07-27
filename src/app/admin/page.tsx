@@ -123,19 +123,24 @@ export default async function AdminPage() {
       )}
 
       <h2>Webhook от ApiPay</h2>
-      {webhookSecretSet ? null : (
-        <p className="admin-note" style={{ color: '#FF9BC4' }}>
-          <b>APIPAY_WEBHOOK_SECRET не задан.</b> Пока он пуст, все уведомления от ApiPay
-          отклоняются с кодом 401, и оплаты не будут засчитываться. Секрет выдаётся при
-          создании webhook&apos;а в кабинете: Настройки → Подключение.
-        </p>
-      )}
       <p className="admin-note">
         Адрес уведомлений для кабинета ApiPay: <code>{webhookUrl}</code>
         <br />
-        Секрет подписи: {webhookSecretSet ? 'задан ✓' : 'не задан ✗'}. Проверить связь можно
-        кнопкой «Тест вебхука» в кабинете (Настройки → API-ключи) — ниже появится строка с
-        событием <code>webhook.test</code> и результатом <code>test_ok</code>.
+        Секрет подписи: {webhookSecretSet ? 'задан ✓' : 'не задан'}.
+      </p>
+      {webhookSecretSet ? null : (
+        <p className="admin-note">
+          Без секрета оплаты всё равно засчитываются, но другим путём: телу уведомления сервер
+          не верит и сам спрашивает статус у ApiPay своим API-ключом. Подделать входящий запрос
+          можно, заставить ApiPay ответить «оплачено» — нет. В колонке «Результат» такие
+          записи помечены <code>_via_api</code>. Задать секрет всё же стоит: с ним проверка
+          дешевле и не зависит от доступности ApiPay в этот момент.
+        </p>
+      )}
+      <p className="admin-note">
+        Проверить связь: кабинет ApiPay → «Проверить уведомления». Ниже появится строка с
+        событием <code>webhook.test</code> и результатом <code>test_ok_signed</code> либо
+        <code> test_ok_unsigned</code> — по нему видно, подписывает ли ApiPay уведомления.
       </p>
       {webhooks.length === 0 ? (
         <p className="admin-empty">

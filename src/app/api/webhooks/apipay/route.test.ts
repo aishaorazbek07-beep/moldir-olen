@@ -6,13 +6,22 @@ const SECRET = 'whsec_route_test';
 process.env.APIPAY_WEBHOOK_SECRET = SECRET;
 
 /**
- * Хранилище подменяем, платёжное ядро — настоящее. Так тест проверяет весь путь
- * запроса: подпись → разбор → ядро → выдача.
+ * Хранилище и клиент ApiPay подменяем, платёжное ядро — настоящее.
+ * Так тест проходит весь путь запроса: подпись → сверка → ядро → выдача.
  */
 const state = {
   payment: null as PaymentRecord | null,
   votes: [] as Array<{ paymentId: string; teamId: number; quantity: number }>,
   statuses: [] as string[],
+  /** Что ApiPay ответит на GET /invoices/{id}. */
+  apiInvoice: null as null | {
+    id: string;
+    status: string;
+    amount: string | number | null;
+    externalOrderId: string | null;
+    paidAt: string | null;
+  },
+  apiCalls: [] as string[],
 };
 
 vi.mock('@/lib/repo', () => ({
@@ -36,16 +45,21 @@ vi.mock('@/lib/repo', () => ({
   logWebhookEvent: async () => undefined,
 }));
 
+vi.mock('@/lib/apipay', () => ({
+  getInvoice: async (id: string) => {
+    state.apiCalls.push(id);
+    return state.apiInvoice;
+  },
+}));
+
 const { POST } = await import('./route');
 
 function webhookRequest(body: unknown, signature?: string | null) {
   const raw = JSON.stringify(body);
   const headers = new Headers({ 'content-type': 'application/json' });
-
   if (signature !== null) {
     headers.set('x-webhook-signature', signature ?? computeSignature(raw, SECRET));
   }
-
   return new Request('https://example.kz/api/webhooks/apipay', {
     method: 'POST',
     headers,
@@ -76,58 +90,27 @@ beforeEach(() => {
   };
   state.votes = [];
   state.statuses = [];
+  state.apiCalls = [];
+  state.apiInvoice = {
+    id: '42',
+    status: 'paid',
+    amount: '2000.00',
+    externalOrderId: 'vote_abc',
+    paidAt: '2026-07-27T10:00:00+00:00',
+  };
 });
 
-describe('POST /api/webhooks/apipay', () => {
-  it('засчитывает голоса при верной подписи', async () => {
+describe('подписанные уведомления', () => {
+  it('засчитывают голоса и не дёргают API лишний раз', async () => {
     const res = await POST(webhookRequest(paidBody));
 
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toMatchObject({ outcome: 'granted_vote' });
     expect(state.votes).toEqual([{ paymentId: 'pay-1', teamId: 2, quantity: 10 }]);
+    expect(state.apiCalls).toHaveLength(0);
   });
 
-  it('отвергает подделанную подпись и НЕ засчитывает голос', async () => {
-    const res = await POST(webhookRequest(paidBody, 'sha256=deadbeef'));
-
-    expect(res.status).toBe(401);
-    expect(state.votes).toHaveLength(0);
-  });
-
-  it('отвергает запрос без подписи — старая дыра закрыта', async () => {
-    const res = await POST(webhookRequest(paidBody, null));
-
-    expect(res.status).toBe(401);
-    expect(state.votes).toHaveLength(0);
-  });
-
-  it('подпись, посчитанная чужим секретом, не проходит', async () => {
-    const raw = JSON.stringify(paidBody);
-    const res = await POST(webhookRequest(paidBody, computeSignature(raw, 'чужой')));
-
-    expect(res.status).toBe(401);
-    expect(state.votes).toHaveLength(0);
-  });
-
-  it('подписанное, но подменённое после подписи тело не проходит', async () => {
-    const original = JSON.stringify(paidBody);
-    const signature = computeSignature(original, SECRET);
-
-    // Сумму увеличили после подписания — подпись обязана разойтись.
-    const tampered = original.replace('2000.00', '999999.00');
-    const req = new Request('https://example.kz/api/webhooks/apipay', {
-      method: 'POST',
-      headers: { 'x-webhook-signature': signature, 'content-type': 'application/json' },
-      body: tampered,
-    });
-
-    const res = await POST(req);
-
-    expect(res.status).toBe(401);
-    expect(state.votes).toHaveLength(0);
-  });
-
-  it('повторная доставка того же webhook даёт один голос', async () => {
+  it('повторная доставка даёт один голос', async () => {
     await POST(webhookRequest(paidBody));
     const second = await POST(webhookRequest(paidBody));
 
@@ -146,53 +129,122 @@ describe('POST /api/webhooks/apipay', () => {
   });
 
   it('статус expired помечает платёж и не даёт голос', async () => {
-    const res = await POST(
-      webhookRequest({ ...paidBody, invoice: { ...paidBody.invoice, status: 'expired' } }),
-    );
+    await POST(webhookRequest({ ...paidBody, invoice: { ...paidBody.invoice, status: 'expired' } }));
 
-    expect(res.status).toBe(200);
     expect(state.votes).toHaveLength(0);
     expect(state.statuses).toContain('expired');
   });
+});
 
-  it('webhook про неизвестный заказ ничего не создаёт', async () => {
-    state.payment = null;
-    const res = await POST(webhookRequest(paidBody));
-
-    await expect(res.json()).resolves.toMatchObject({ outcome: 'rejected_payment_not_found' });
-    expect(state.votes).toHaveLength(0);
-  });
-
-  it('кнопка «Тест вебхука» из кабинета даёт понятный успех', async () => {
-    const res = await POST(
-      webhookRequest({
-        event: 'webhook.test',
-        invoice: { id: 0, status: 'test', amount: '0.00' },
-      }),
-    );
+describe('уведомления БЕЗ подписи — статус берём у ApiPay сами', () => {
+  it('засчитывают голос, когда ApiPay подтверждает оплату', async () => {
+    const res = await POST(webhookRequest(paidBody, null));
 
     expect(res.status).toBe(200);
-    await expect(res.json()).resolves.toMatchObject({ outcome: 'test_ok' });
+    await expect(res.json()).resolves.toMatchObject({ outcome: 'granted_vote_via_api' });
+    expect(state.apiCalls).toEqual(['42']);
+    expect(state.votes).toHaveLength(1);
+  });
+
+  it('НЕ засчитывают, если тело врёт «paid», а ApiPay говорит «pending»', async () => {
+    state.apiInvoice = { ...state.apiInvoice!, status: 'pending' };
+
+    const res = await POST(webhookRequest(paidBody, null));
+
+    await expect(res.json()).resolves.toMatchObject({ ok: true });
     expect(state.votes).toHaveLength(0);
   });
 
-  it('тестовое событие с чужой подписью всё равно отклоняется', async () => {
-    const res = await POST(
-      webhookRequest({ event: 'webhook.test', invoice: { status: 'test' } }, 'sha256=00'),
-    );
+  it('НЕ засчитывают, если тело врёт про сумму — сумма берётся из ответа ApiPay', async () => {
+    // Злоумышленник прислал «оплачено 2000», у ApiPay счёт на 200.
+    state.apiInvoice = { ...state.apiInvoice!, amount: '200.00' };
 
-    expect(res.status).toBe(401);
+    const res = await POST(webhookRequest(paidBody, null));
+
+    await expect(res.json()).resolves.toMatchObject({ outcome: 'rejected_amount_mismatch_via_api' });
+    expect(state.votes).toHaveLength(0);
   });
 
-  it('битый JSON с верной подписью отклоняется', async () => {
-    const raw = '{не json';
-    const req = new Request('https://example.kz/api/webhooks/apipay', {
-      method: 'POST',
-      headers: { 'x-webhook-signature': computeSignature(raw, SECRET) },
-      body: raw,
-    });
+  it('не ходят в API за неизвестным заказом — защита от прокачки лимита', async () => {
+    state.payment = null;
 
-    const res = await POST(req);
+    const res = await POST(webhookRequest(paidBody, null));
+
+    await expect(res.json()).resolves.toMatchObject({ outcome: 'rejected_unknown_order_unsigned' });
+    expect(state.apiCalls).toHaveLength(0);
+    expect(state.votes).toHaveLength(0);
+  });
+
+  it('не ходят в API по уже оплаченному счёту', async () => {
+    state.payment!.status = 'paid';
+
+    const res = await POST(webhookRequest(paidBody, null));
+
+    await expect(res.json()).resolves.toMatchObject({ outcome: 'already_paid' });
+    expect(state.apiCalls).toHaveLength(0);
+  });
+
+  it('отвергают счёт, принадлежащий чужому заказу', async () => {
+    state.apiInvoice = { ...state.apiInvoice!, externalOrderId: 'vote_чужой' };
+
+    const res = await POST(webhookRequest(paidBody, null));
+
+    await expect(res.json()).resolves.toMatchObject({ outcome: 'rejected_order_mismatch' });
+    expect(state.votes).toHaveLength(0);
+  });
+
+  it('отвергают, если ApiPay такого счёта не знает', async () => {
+    state.apiInvoice = null;
+
+    const res = await POST(webhookRequest(paidBody, null));
+
+    await expect(res.json()).resolves.toMatchObject({
+      outcome: 'rejected_invoice_not_found_at_apipay',
+    });
+    expect(state.votes).toHaveLength(0);
+  });
+
+  it('подделанная подпись идёт тем же строгим путём, что и её отсутствие', async () => {
+    state.apiInvoice = { ...state.apiInvoice!, status: 'pending' };
+
+    const res = await POST(webhookRequest(paidBody, 'sha256=deadbeef'));
+
+    expect(state.votes).toHaveLength(0);
+    await expect(res.json()).resolves.toMatchObject({ ok: true });
+  });
+});
+
+describe('служебные случаи', () => {
+  it('кнопка «Проверить уведомления» даёт понятный успех и помечает, был ли тест подписан', async () => {
+    const signed = await POST(
+      webhookRequest({ event: 'webhook.test', invoice: { id: 0, status: 'test' } }),
+    );
+    await expect(signed.json()).resolves.toMatchObject({ outcome: 'test_ok', signed: true });
+
+    const unsigned = await POST(
+      webhookRequest({ event: 'webhook.test', invoice: { id: 0, status: 'test' } }, null),
+    );
+    await expect(unsigned.json()).resolves.toMatchObject({ outcome: 'test_ok', signed: false });
+
+    expect(state.votes).toHaveLength(0);
+  });
+
+  it('уведомление без номера заказа не создаёт выдачу', async () => {
+    const res = await POST(webhookRequest({ event: 'invoice.status_changed', invoice: { id: 1 } }));
+
+    await expect(res.json()).resolves.toMatchObject({ ignored: true });
+    expect(state.votes).toHaveLength(0);
+  });
+
+  it('битый JSON отклоняется', async () => {
+    const raw = '{не json';
+    const res = await POST(
+      new Request('https://example.kz/api/webhooks/apipay', {
+        method: 'POST',
+        headers: { 'x-webhook-signature': computeSignature(raw, SECRET) },
+        body: raw,
+      }),
+    );
 
     expect(res.status).toBe(400);
     expect(state.votes).toHaveLength(0);
