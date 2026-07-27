@@ -1,4 +1,4 @@
-:root{
+﻿:root{
   --night:#120731;
   --night2:#1D0C48;
   --violet:#7A3BFF;
@@ -306,11 +306,21 @@ footer .serif{font-size:24px;color:var(--paper);display:block;margin-bottom:8px}
 .modal.open{display:flex}
 .modal-bg{position:absolute;inset:0;background:rgba(9,3,25,.7);backdrop-filter:blur(6px);animation:fade .3s;border:none}
 @keyframes fade{from{opacity:0}}
-.sheet{position:relative;width:100%;max-width:460px;max-height:88svh;overflow-y:auto;
+/* dvh, а не svh: когда открывается экранная клавиатура, видимая высота меняется,
+   и шторка должна ужиматься вместе с ней, а не уезжать под клавиатуру. */
+.sheet{position:relative;width:100%;max-width:460px;max-height:88dvh;overflow-y:auto;
   background:linear-gradient(180deg,#241154,#160A36);
-  border-radius:28px 28px 0 0;padding:14px 22px calc(26px + env(safe-area-inset-bottom));
+  border-radius:28px 28px 0 0;padding:14px 22px 0;
   border:1px solid rgba(255,255,255,.12);border-bottom:none;
   animation:sheetup .45s cubic-bezier(.2,.8,.2,1)}
+
+/* Кнопка оплаты прилипает к низу шторки.
+   Иначе на невысоком экране — а с открытой клавиатурой это почти любой телефон —
+   она оказывается ниже видимой области, и человек её просто не находит. */
+.sheet-cta{position:sticky;bottom:0;z-index:2;margin:16px -22px 0;
+  padding:14px 22px calc(20px + env(safe-area-inset-bottom));
+  background:linear-gradient(180deg,rgba(22,10,54,0),#1A0C3E 34%,#180B3A)}
+.sheet-cta .form-error{margin:0 0 10px}
 @keyframes sheetup{from{transform:translateY(60px);opacity:0}}
 .grip{width:44px;height:5px;border-radius:99px;background:rgba(255,255,255,.25);margin:0 auto 18px}
 .sheet h3{font-family:'Prata',serif;font-weight:400;font-size:23px;margin-bottom:6px}
@@ -324,16 +334,18 @@ footer .serif{font-size:24px;color:var(--paper);display:block;margin-bottom:8px}
   padding:16px;border-radius:18px;background:rgba(255,194,75,.1);border:1px solid rgba(255,194,75,.3)}
 .sum span{color:var(--muted);font-size:13px}
 .sum b{font-family:'Prata',serif;font-weight:400;font-size:24px;color:var(--gold)}
-.pay-wait{text-align:center;padding:26px 0 10px}
+/* Нижний отступ теперь на самих экранах: у .sheet его нет, чтобы прилипающая
+   кнопка могла дойти до самого края шторки. */
+.pay-wait{text-align:center;padding:26px 0 calc(26px + env(safe-area-inset-bottom))}
 .pay-wait .ring{width:54px;height:54px;margin:0 auto 16px;border-radius:50%;
   border:4px solid rgba(255,255,255,.15);border-top-color:var(--moldir);animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.pay-ok{text-align:center;padding:14px 0 6px}
+.pay-ok{text-align:center;padding:14px 0 calc(26px + env(safe-area-inset-bottom))}
 .pay-ok .check{width:74px;height:74px;margin:0 auto 16px;border-radius:50%;display:grid;place-items:center;
   background:linear-gradient(135deg,var(--moldir),#8FF0E9);color:#062A28;font-size:36px;
   animation:pop .55s cubic-bezier(.2,1.6,.4,1)}
 @keyframes pop{from{transform:scale(.3);opacity:0}}
-.pay-fail{text-align:center;padding:14px 0 6px}
+.pay-fail{text-align:center;padding:14px 0 calc(26px + env(safe-area-inset-bottom))}
 .pay-fail .cross{width:74px;height:74px;margin:0 auto 16px;border-radius:50%;display:grid;place-items:center;
   background:rgba(240,67,155,.18);border:1px solid rgba(240,67,155,.5);color:var(--magenta);font-size:34px;
   animation:pop .55s cubic-bezier(.2,1.6,.4,1)}

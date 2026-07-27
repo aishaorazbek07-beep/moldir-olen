@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { SHOWS, type ShowConfig } from '@/lib/config';
 import { tenge } from '@/lib/format';
 import { Reveal } from './Reveal';
-import { FailScreen, PhoneField, Sheet, WaitingScreen } from './Sheet';
+import { FailScreen, PhoneField, Sheet, SheetCta, WaitingScreen } from './Sheet';
 import { TEST_MODE, usePayment } from './usePayment';
 
 export function TicketSection() {
@@ -120,11 +120,12 @@ export function TicketSection() {
 
             <PhoneField value={phone} onChange={setPhone} disabled={busy} />
 
-            {payment.error ? <p className="form-error">{payment.error}</p> : null}
-
-            <button className="btn btn-moldir btn-block" onClick={submit} disabled={busy} type="button">
-              {busy ? 'Шот жіберілуде...' : 'Kaspi арқылы төлеу'}
-            </button>
+            <SheetCta>
+              {payment.error ? <p className="form-error">{payment.error}</p> : null}
+              <button className="btn btn-moldir btn-block" onClick={submit} disabled={busy} type="button">
+                {busy ? 'Шот жіберілуде...' : `${tenge(qty * show.price)} · Kaspi арқылы төлеу`}
+              </button>
+            </SheetCta>
           </>
         ) : payment.phase === 'waiting' ? (
           <WaitingScreen showTestButton={TEST_MODE} onTestPay={() => void payment.testPay()} />

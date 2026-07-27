@@ -5,7 +5,7 @@ import { MAX_VOTES_PER_PAYMENT, VOTE_PRICE } from '@/lib/config';
 import { fmt, tenge } from '@/lib/format';
 import type { TeamWithStats } from '@/lib/votes';
 import { Reveal } from './Reveal';
-import { FailScreen, PhoneField, Sheet, WaitingScreen } from './Sheet';
+import { FailScreen, PhoneField, Sheet, SheetCta, WaitingScreen } from './Sheet';
 import { TEST_MODE, usePayment } from './usePayment';
 
 const ROMAN = ['I', 'II', 'III', 'IV', 'V'];
@@ -112,11 +112,12 @@ export function VoteSection({ initialTeams }: { initialTeams: TeamWithStats[] })
 
             <PhoneField value={phone} onChange={setPhone} disabled={busy} />
 
-            {payment.error ? <p className="form-error">{payment.error}</p> : null}
-
-            <button className="btn btn-fire btn-block" onClick={submit} disabled={busy} type="button">
-              {busy ? 'Шот жіберілуде...' : 'Kaspi арқылы төлеу'}
-            </button>
+            <SheetCta>
+              {payment.error ? <p className="form-error">{payment.error}</p> : null}
+              <button className="btn btn-fire btn-block" onClick={submit} disabled={busy} type="button">
+                {busy ? 'Шот жіберілуде...' : `${tenge(qty * VOTE_PRICE)} · Kaspi арқылы төлеу`}
+              </button>
+            </SheetCta>
           </>
         ) : payment.phase === 'waiting' ? (
           <WaitingScreen showTestButton={TEST_MODE} onTestPay={() => void payment.testPay()} />

@@ -1,8 +1,17 @@
 'use client';
 
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 
-/** Нижняя шторка. На широких экранах CSS ставит её по центру. */
+/**
+ * Нижняя шторка. На широких экранах CSS ставит её по центру.
+ *
+ * Рендерится порталом прямо в body, а не там, где стоит в разметке.
+ * Причина: шторка вызывается изнутри <section>, у которой position:relative и
+ * z-index:1 — это создаёт отдельный контекст наложения, и z-index шторки
+ * действует только внутри него. Таб-бар живёт на уровне body, и без портала он
+ * оказывается поверх шторки, закрывая кнопку оплаты на телефоне.
+ */
 export function Sheet({
   open,
   onClose,
@@ -12,6 +21,10 @@ export function Sheet({
   onClose: () => void;
   children: ReactNode;
 }) {
+  // На сервере document нет, поэтому портал вешаем только после монтирования.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   useEffect(() => {
     if (!open) return;
 
@@ -27,16 +40,17 @@ export function Sheet({
     };
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
-  return (
+  return createPortal(
     <div className="modal open" role="dialog" aria-modal="true">
       <button className="modal-bg" onClick={onClose} aria-label="Жабу" type="button" />
       <div className="sheet">
         <div className="grip" />
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -67,6 +81,14 @@ export function PhoneField({
   );
 }
 
+/**
+ * Подвал шторки с главной кнопкой. Прилипает к низу, поэтому кнопка видна и
+ * когда экранная клавиатура съедает половину экрана.
+ */
+export function SheetCta({ children }: { children: ReactNode }) {
+  return <div className="sheet-cta">{children}</div>;
+}
+
 /** Экран ожидания оплаты. Здесь человек уходит в Kaspi и подтверждает счёт. */
 export function WaitingScreen({
   onTestPay,
@@ -88,8 +110,7 @@ export function WaitingScreen({
             Тестілік төлемді растау
           </button>
           <div className="sandbox-note">
-            Сынақ режимі. Нақты ақша алынбайды. ApiPay шотты өз жағында өткізеді де, бізге нағыз
-            webhook жібереді — растау жолы боевойымен бірдей.
+            Сынақ режимі. Нақты ақша алынбайды.
           </div>
         </>
       ) : null}
