@@ -146,6 +146,26 @@ export async function attachInvoiceId(paymentId: string, invoiceId: string): Pro
   await sql`update payments set apipay_invoice_id = ${invoiceId} where id = ${paymentId}`;
 }
 
+/**
+ * Записывает причину, по которой счёт не удалось создать.
+ *
+ * Без этого в базе оставался голый статус error, и понять, почему платежи не
+ * проходят, можно было только гаданием. Код ошибки от ApiPay говорит прямо:
+ * не подключён кассир, не заполнен профиль, исчерпан лимит.
+ */
+export async function markPaymentFailed(
+  paymentId: string,
+  code: string,
+  message: string,
+): Promise<void> {
+  await sql`
+    update payments
+    set status = 'error',
+        meta = meta || ${sql.json({ errorCode: code, errorMessage: message } as never)}
+    where id = ${paymentId}
+  `;
+}
+
 export interface PaymentPublicStatus {
   id: string;
   externalOrderId: string;

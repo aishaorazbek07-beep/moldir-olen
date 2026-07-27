@@ -286,6 +286,11 @@ export async function adjustTeamVotes(teamId: number, delta: number): Promise<Ad
 }
 
 function labelFor(kind: string, meta: Record<string, unknown>, teamName: string | null): string {
+  // Если счёт вообще не создался — важнее показать причину, а не что заказывали.
+  if (typeof meta.errorCode === 'string') {
+    return `⚠ ${meta.errorCode}: ${String(meta.errorMessage ?? '').slice(0, 120)}`;
+  }
+
   if (kind === 'vote') {
     const qty = meta.quantity ?? '?';
     return `${teamName ?? 'команда'} · ${qty} дауыс`;

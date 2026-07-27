@@ -7,6 +7,7 @@ import {
   countRecentPayments,
   createPaymentRow,
   loadPaymentById,
+  markPaymentFailed,
   paymentRepo,
 } from './repo';
 
@@ -69,17 +70,41 @@ export async function startPayment(input: {
       await attachInvoiceId(paymentId, invoice.invoiceId);
     }
   } catch (err) {
-    await paymentRepo.markStatus(paymentId, 'error');
+    const code = err instanceof ApiPayError ? err.code : 'unknown';
+    const detail = err instanceof Error ? err.message : String(err);
 
-    const message =
-      err instanceof ApiPayError && err.code === 'client_not_found'
-        ? 'Бұл нөмір Kaspi жүйесінде табылмады. Нөмірді тексеріңіз.'
-        : 'Төлем жүйесіне қосылу мүмкін болмады. Сәл кейін қайталап көріңіз.';
+    // Причину сохраняем: иначе в базе остаётся голый error, и понять, почему
+    // платежи не идут, можно только гаданием.
+    await markPaymentFailed(paymentId, code, detail);
 
-    return { ok: false, code: 'provider_error', error: message };
+    return { ok: false, code: 'provider_error', error: messageForCode(code) };
   }
 
   return { ok: true, paymentId };
+}
+
+/**
+ * Что показать человеку. Про внутренние причины — незаполненный профиль,
+ * неподключённый кассир — посетителю знать незачем, но и врать «попробуйте
+ * позже» там, где повтор не поможет, тоже неправильно.
+ */
+function messageForCode(code: string): string {
+  switch (code) {
+    case 'client_not_found':
+      return 'Бұл нөмір Kaspi жүйесінде табылмады. Нөмірді тексеріңіз.';
+    case 'kaspi_throttled':
+    case 'network_unavailable':
+    case 'timeout':
+      return 'Төлем жүйесі бос емес. Сәл кейін қайталап көріңіз.';
+    case 'kaspi_session_not_configured':
+    case 'kaspi_session_invalid':
+    case 'kyc_daily_limit_reached':
+    case 'kyc_rejected':
+      // Повтор не поможет: чинить нужно на стороне организации.
+      return 'Төлем жүйесі уақытша қолжетімсіз. Ұйымдастырушыларға хабарласыңыз.';
+    default:
+      return 'Төлем жүйесіне қосылу мүмкін болмады. Сәл кейін қайталап көріңіз.';
+  }
 }
 
 export type SyncedStatus = 'pending' | 'paid' | 'failed';
