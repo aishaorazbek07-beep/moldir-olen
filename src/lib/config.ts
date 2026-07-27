@@ -78,11 +78,18 @@ export const NAV_LINKS = [
  */
 export type PaymentsMode = 'offline' | 'sandbox' | 'live';
 
+/**
+ * Умолчание — БОЕВОЙ режим.
+ *
+ * Именно так, а не наоборот: незаданная переменная не должна открывать
+ * тестовые лазейки. Если PAYMENTS_MODE забыли выставить на проде, сайт
+ * работает строго, а не раздаёт голоса даром.
+ */
 export function paymentsMode(): PaymentsMode {
   const mode = process.env.PAYMENTS_MODE;
-  if (mode === 'live') return 'live';
+  if (mode === 'offline') return 'offline';
   if (mode === 'sandbox') return 'sandbox';
-  return 'offline';
+  return 'live';
 }
 
 /** Ходим ли мы в ApiPay по сети. */
@@ -90,7 +97,13 @@ export function callsApiPay(): boolean {
   return paymentsMode() !== 'offline';
 }
 
-/** Показывать ли кнопку тестового подтверждения оплаты. */
-export function isTestMode(): boolean {
-  return paymentsMode() !== 'live';
+/**
+ * Доступно ли подтверждение оплаты без денег.
+ *
+ * Требует ДВУХ условий сразу: небоевой режим и явное разрешение отдельной
+ * переменной. Одного PAYMENTS_MODE мало — песочница вполне может стоять на
+ * публичном домене, и тогда маршрут раздавал бы голоса всем желающим.
+ */
+export function testPaymentsEnabled(): boolean {
+  return paymentsMode() !== 'live' && process.env.ENABLE_TEST_PAYMENTS === 'true';
 }

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { simulateStatus } from '@/lib/apipay';
-import { isTestMode, paymentsMode } from '@/lib/config';
+import { paymentsMode, testPaymentsEnabled } from '@/lib/config';
 import { confirmPayment } from '@/lib/payments-core';
 import { badRequest, readJson } from '@/lib/request';
 import { loadPaymentById, paymentRepo } from '@/lib/repo';
@@ -9,9 +9,14 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 /**
- * Тестовое подтверждение оплаты. Работает ТОЛЬКО вне боевого режима —
- * при PAYMENTS_MODE=live маршрут отвечает 404, то есть подтвердить им оплату
- * нельзя даже зная адрес.
+ * Тестовое подтверждение оплаты.
+ *
+ * Включается только двумя условиями сразу: PAYMENTS_MODE не live И
+ * ENABLE_TEST_PAYMENTS=true. В любом другом случае — 404, то есть подтвердить
+ * оплату этим маршрутом нельзя даже зная адрес и paymentId.
+ *
+ * Двойное условие не паранойя: незаданная переменная окружения не должна
+ * открывать способ засчитать голос без денег.
  *
  * В режиме sandbox вызывает POST /invoices/{id}/simulate-status у ApiPay: счёт
  * проводится на их стороне и к нам прилетает настоящий подписанный webhook.
@@ -21,7 +26,7 @@ export const dynamic = 'force-dynamic';
  * confirmPayment, который вызывает и webhook.
  */
 export async function POST(req: Request) {
-  if (!isTestMode()) {
+  if (!testPaymentsEnabled()) {
     return NextResponse.json({ error: 'not found' }, { status: 404 });
   }
 

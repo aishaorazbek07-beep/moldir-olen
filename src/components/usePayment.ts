@@ -26,8 +26,13 @@ const POLL_INTERVAL_MS = 2000;
 /** Счёт в Kaspi живёт сутки, но столько ждать на экране бессмысленно. */
 const WAIT_TIMEOUT_MS = 5 * 60 * 1000;
 
-/** Кнопка тестового подтверждения показывается везде, кроме боевого режима. */
-export const TEST_MODE = process.env.NEXT_PUBLIC_PAYMENTS_MODE !== 'live';
+/**
+ * Кнопка тестового подтверждения показывается только при явном разрешении.
+ * Зеркалит серверную проверку: без ENABLE_TEST_PAYMENTS маршрут всё равно 404.
+ */
+export const TEST_MODE =
+  process.env.NEXT_PUBLIC_PAYMENTS_MODE !== 'live' &&
+  process.env.NEXT_PUBLIC_ENABLE_TEST_PAYMENTS === 'true';
 
 /**
  * Ведёт платёж со стороны браузера: создаёт счёт и опрашивает статус.
