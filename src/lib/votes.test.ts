@@ -60,6 +60,7 @@ describe('publicTeam', () => {
       'placeLabel',
       'colorIndex',
       'kaspiUrl',
+      'imageUrl',
       'votes',
     ]);
   });
@@ -72,6 +73,7 @@ describe('withPercentages', () => {
     placeLabel: '',
     colorIndex: 1,
     kaspiUrl: '',
+    imageUrl: '',
     votes,
   });
 

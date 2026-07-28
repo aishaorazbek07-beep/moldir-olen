@@ -1,5 +1,4 @@
-import type { Poet } from '@/lib/catalog';
-import { Quill } from './Quill';
+﻿import type { Poet } from '@/lib/catalog';
 import { Reveal } from './Reveal';
 
 /**
@@ -30,7 +29,6 @@ export function Poets({ poets, title, lead }: { poets: Poet[]; title: string; le
                   <img src={poet.imageUrl} alt={poet.name} loading="lazy" />
                 ) : (
                   <span className="poet-initial">
-                    <Quill className="poet-quill" />
                     <b>{poet.name.trim().charAt(0) || 'Ө'}</b>
                   </span>
                 )}

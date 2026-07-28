@@ -1,4 +1,4 @@
-import type { TeamRecord } from './content';
+﻿import type { TeamRecord } from './content';
 
 export interface TeamCounts {
   /** Заявка подана, оплату ещё не сверяли. */
@@ -30,6 +30,7 @@ export interface PublicTeam {
   placeLabel: string;
   colorIndex: number;
   kaspiUrl: string;
+  imageUrl: string;
   votes: number;
 }
 
@@ -46,6 +47,7 @@ export function publicTeam(team: TeamRecord, counts: TeamCounts): PublicTeam {
     placeLabel: team.placeLabel,
     colorIndex: team.colorIndex,
     kaspiUrl: team.kaspiUrl,
+    imageUrl: team.imageUrl,
     votes: displayVotes(counts),
   };
 }

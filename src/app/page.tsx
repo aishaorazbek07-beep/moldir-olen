@@ -1,9 +1,8 @@
-import Link from 'next/link';
+﻿import Link from 'next/link';
 import { Books } from '@/components/Books';
 import { FirstDuel } from '@/components/FirstDuel';
 import { Hero } from '@/components/Hero';
 import { Poets } from '@/components/Poets';
-import { Quill } from '@/components/Quill';
 import { Reveal } from '@/components/Reveal';
 import { loadBooks, loadPoets } from '@/lib/catalog';
 import { loadSettings, loadTeams } from '@/lib/content';
@@ -51,12 +50,13 @@ export default async function HomePage() {
         ) : null}
 
         <Reveal>
-          <div className="tiles">
+          <div className="rows">
             {TILES.map((tile) => (
-              <Link className="tile" href={tile.href} key={tile.href}>
-                <b>{tile.title}</b>
-                <small>{tile.note}</small>
-                <Quill className="tile-icon" />
+              <Link className="row-link" href={tile.href} key={tile.href}>
+                <span className="txt">
+                  <b>{tile.title}</b>
+                  <small>{tile.note}</small>
+                </span>
                 <span className="go" aria-hidden="true">
                   →
                 </span>

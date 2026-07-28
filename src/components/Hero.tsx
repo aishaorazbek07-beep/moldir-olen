@@ -1,7 +1,6 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
-import { Quill } from './Quill';
 
 /** Заголовок собирается по буквам с нарастающей задержкой. */
 function Letters({ word, delay }: { word: string; delay: number }) {
@@ -28,7 +27,7 @@ export function Hero({
   return (
     <section className="hero" id="top">
       <div className="hero-inner">
-        <Quill className="hero-quill" />
+        <span className="eyebrow">{tagline}</span>
 
         <div className="title">
           <div className="row t1">
@@ -39,13 +38,7 @@ export function Hero({
           </div>
         </div>
 
-        <p className="hero-tagline">{tagline}</p>
-
-        <div className="orn">
-          <i />
-          <b>✦</b>
-          <i />
-        </div>
+        <div className="hero-rule" />
 
         {verse ? (
           <p className="hero-verse">
@@ -58,13 +51,14 @@ export function Hero({
           </p>
         ) : null}
 
-        <div className="hero-tags">
+        <div className="hero-facts">
           {tags.map((tag) => {
             const space = tag.lastIndexOf(' ');
             return (
-              <span key={tag}>
-                <b>{space > 0 ? tag.slice(0, space) : tag}</b> {space > 0 ? tag.slice(space + 1) : ''}
-              </span>
+              <div key={tag}>
+                <b>{space > 0 ? tag.slice(0, space) : tag}</b>
+                <span>{space > 0 ? tag.slice(space + 1) : ''}</span>
+              </div>
             );
           })}
         </div>

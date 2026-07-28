@@ -1,12 +1,16 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState } from 'react';
 import { fmt, tenge } from '@/lib/format';
 import type { TeamWithStats } from '@/lib/votes';
-import { Quill, QuillDivider } from './Quill';
 import { Reveal } from './Reveal';
 import { VoteFlow } from './VoteFlow';
 
+/**
+ * Табло голосования: два города по обе стороны шва, между ними счёт.
+ * Это же построение, что и в блоке поединка на главной — человек видит
+ * знакомую фигуру и сразу понимает, за кого голосует.
+ */
 export function VoteSection({
   initialTeams,
   votePrice,
@@ -25,10 +29,10 @@ export function VoteSection({
   const [teams, setTeams] = useState(initialTeams);
   const [activeSlug, setActiveSlug] = useState<string | null>(null);
 
-  // Счётчики подтягиваются сами: в эфире цифры меняются, а зритель редко
+  // Счёт подтягивается сам: в эфире цифры меняются, а зритель редко
   // догадывается обновить страницу.
   useEffect(() => {
-    if (activeSlug) return; // пока человек платит, счётчики под ним не дёргаем
+    if (activeSlug) return;
 
     const tick = async () => {
       try {
@@ -49,60 +53,31 @@ export function VoteSection({
 
   return (
     <>
-      <Reveal className="vote-head">
-        <Quill className="quill-ghost" />
-        <span className="eyebrow">{eyebrow}</span>
-        <h2 className="h2">{title}</h2>
-        <p className="lead">{lead}</p>
-        <div className="vote-note">
-          ✦ 1 дауыс — {tenge(votePrice)} · {note}
+      <Reveal>
+        <div className="sec-head">
+          <span className="eyebrow">{eyebrow}</span>
+          <h2 className="h2">{title}</h2>
+          <p className="lead">{lead}</p>
         </div>
-        <QuillDivider />
-      </Reveal>
 
-      <Reveal className="arena-wrap">
-        <div className={`arena cols-${Math.min(teams.length, 4)}`}>
-          {teams.map((team) => (
-            <div
-              key={team.slug}
-              className={`vs-card${team.isLeader ? ' leading' : ''}`}
-              data-c={team.colorIndex}
-            >
-              <div className="ink" style={{ height: `${team.fillPercent}%` }} />
-              {team.isLeader ? <span className="crown">👑</span> : null}
+        <div className="card-head">
+          <i />
+          <b>
+            1 дауыс — {tenge(votePrice)}
+          </b>
+          <i />
+        </div>
 
-              <div className="vs-body">
-                <div className="vs-name serif">{team.name}</div>
-                <div className="vs-place">{team.placeLabel}</div>
-
-                <div className="vs-count">
-                  <b>{fmt(team.votes)}</b>
-                  <span>дауыс</span>
-                </div>
-
-                <div className="vs-bar">
-                  <i style={{ width: `${team.percent}%` }} />
-                </div>
-                <div className="vs-pct">{team.percent}%</div>
-
-                <button
-                  className="btn btn-fire btn-block btn-vote"
-                  onClick={() => setActiveSlug(team.slug)}
-                  type="button"
-                >
-                  Дауыс беру
-                </button>
-              </div>
-            </div>
+        <div className="arena">
+          {teams.map((team, i) => (
+            <Slot key={team.slug} team={team} index={i} onVote={() => setActiveSlug(team.slug)} />
           ))}
         </div>
-      </Reveal>
 
-      {teams.length > 1 ? (
         <p className="arena-total">
-          Барлығы <b>{fmt(total)}</b> дауыс берілді
+          Барлығы <b>{fmt(total)}</b> дауыс
         </p>
-      ) : null}
+      </Reveal>
 
       {activeSlug ? (
         <VoteFlow
@@ -113,6 +88,49 @@ export function VoteSection({
           votePrice={votePrice}
         />
       ) : null}
+    </>
+  );
+}
+
+function Slot({
+  team,
+  index,
+  onVote,
+}: {
+  team: TeamWithStats;
+  index: number;
+  onVote: () => void;
+}) {
+  return (
+    <>
+      {index > 0 ? <span className="seam" /> : null}
+      <div className={`vs-card${index % 2 ? ' b' : ''}${team.isLeader ? ' leading' : ''}`}>
+        <div className="vs-photo-top">
+          {team.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={team.imageUrl} alt={team.name} loading="lazy" />
+          ) : null}
+        </div>
+
+        <div className="vs-body">
+          <div className="vs-name">{team.name}</div>
+          <div className="vs-place">{team.placeLabel}</div>
+
+          <div className="vs-count">
+            <b>{fmt(team.votes)}</b>
+            <span>дауыс</span>
+          </div>
+
+          <div className="vs-bar">
+            <i style={{ width: `${team.percent}%` }} />
+          </div>
+          <div className="vs-pct">{team.percent}%</div>
+
+          <button className="btn btn-fire btn-vote" onClick={onVote} type="button">
+            Дауыс беру
+          </button>
+        </div>
+      </div>
     </>
   );
 }
