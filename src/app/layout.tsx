@@ -1,14 +1,16 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import { Backdrop } from '@/components/Backdrop';
+import { SiteFooter } from '@/components/SiteFooter';
 import { SiteHeader } from '@/components/SiteHeader';
 import { TabBar } from '@/components/TabBar';
+import { loadSettings } from '@/lib/content';
 import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Мөлдір өлең - 2-маусым | Ұлттық поэзиялық жоба',
   description:
-    'Мөлдір өлең - ұлттық поэзиялық жоба. Дауыс беріңіз, кешке билет алыңыз, 2-маусымға өтінім тапсырыңыз.',
+    'Мөлдір өлең - ұлттық поэзиялық жоба. Финалист қалаларға дауыс беріңіз.',
 };
 
 export const viewport: Viewport = {
@@ -18,7 +20,12 @@ export const viewport: Viewport = {
   themeColor: '#120731',
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  // Подвал общий для всех страниц, поэтому настройки читаются здесь.
+  // loadSettings при недоступной базе отдаёт слепок из кода, так что
+  // страница откроется в любом случае.
+  const { settings } = await loadSettings();
+
   return (
     <html lang="kk">
       <head>
@@ -34,11 +41,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <Backdrop />
         <SiteHeader />
         {children}
-        <footer>
-          <span className="serif">Мөлдір өлең</span>
-          Қазақстан Жазушылар одағының қолдауымен
-          <br />© 2026 · Барлық құқықтар қорғалған
-        </footer>
+        <SiteFooter settings={settings} />
         <TabBar />
       </body>
     </html>

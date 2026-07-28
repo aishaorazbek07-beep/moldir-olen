@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { MAX_VOTE_AMOUNT, RATE_LIMIT } from '@/lib/config';
+import { MAX_VOTE_AMOUNT, RATE_LIMIT, VOTE_PACKS } from '@/lib/config';
 import { loadSettings, loadTeams } from '@/lib/content';
 import { badRequest, clientIp, readJson } from '@/lib/request';
 import { countRecentClaims, insertClaim, loadCounts, receiptAlreadyUsed } from '@/lib/repo';
@@ -49,6 +49,13 @@ export async function POST(req: Request) {
 
   const quantity = votesForAmount(amount, settings.votePrice);
   if (quantity < 1) return badRequest(`Ең аз сома — ${settings.votePrice} ₸`);
+
+  // Принимаем только суммы, ровно соответствующие разрешённым пакетам.
+  // Проверка на сервере, а не только в интерфейсе: иначе правило обходится
+  // одним запросом мимо сайта.
+  if (!VOTE_PACKS.includes(quantity) || quantity * settings.votePrice !== amount) {
+    return badRequest(`Дауыс саны ${VOTE_PACKS.join(', ')} болуы керек`);
+  }
 
   const ip = clientIp(req);
 

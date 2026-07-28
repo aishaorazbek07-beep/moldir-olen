@@ -484,3 +484,79 @@ footer .serif{font-size:24px;color:var(--paper);display:block;margin-bottom:8px}
 .vote-head{position:relative}
 .vote-head > *:not(.quill-ghost){position:relative;z-index:1}
 
+
+/* соцсети в подвале */
+.socials{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:4px 0 16px}
+.socials a{display:inline-flex;align-items:center;gap:7px;text-decoration:none;
+  font-size:13px;font-weight:700;color:var(--paper);
+  padding:9px 15px;border-radius:999px;
+  background:rgba(255,255,255,.06);border:1px solid var(--line);
+  transition:border-color .25s,background .25s,transform .15s}
+.socials a:hover{border-color:rgba(255,194,75,.5);background:rgba(255,194,75,.1)}
+.socials a:active{transform:scale(.96)}
+.socials svg{width:17px;height:17px;flex:0 0 17px;color:var(--gold)}
+
+/* логотип в шапке: золото на почти чёрном, тёмное растворяем в фоне */
+.logo-img{height:42px;width:auto;display:block;mix-blend-mode:screen;
+  filter:saturate(1.1) contrast(1.05)}
+@media (max-width:400px){.logo-img{height:36px}}
+
+/* подвал */
+.footer-mark{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px}
+.footer-mark i{font-style:normal;color:var(--gold);font-size:13px}
+.footer-mark .serif{font-size:21px;color:var(--gold);letter-spacing:.12em;
+  text-transform:uppercase;display:inline;margin:0}
+.footer-venue{color:var(--paper);font-size:14px;margin-bottom:16px}
+.footer-contact{font-size:13.5px;color:var(--muted);margin:14px 0 10px}
+.footer-contact a{color:var(--gold);text-decoration:none;font-weight:700;white-space:nowrap}
+.footer-legal{font-size:12.5px;color:rgba(255,248,238,.42);line-height:1.7}
+
+/* ============ предстоящие дуэли ============ */
+.duels-title{margin:46px 0 18px;font-size:clamp(26px,7vw,36px);color:var(--gold)}
+.duels{display:grid;gap:12px}
+.duel{background:rgba(255,255,255,.04);border:1px solid var(--line);
+  border-radius:22px;overflow:hidden;transition:border-color .3s}
+.duel:hover{border-color:rgba(255,194,75,.4)}
+.duel-poster{display:block;width:100%;height:auto;max-height:340px;object-fit:cover;
+  border-bottom:1px solid var(--line)}
+.duel-body{padding:20px 18px}
+.duel-when{font-size:13px;color:var(--muted);margin-bottom:10px}
+.duel-a{font-family:'Prata',serif;font-size:clamp(18px,5vw,22px);color:var(--gold);line-height:1.25}
+.duel-vs{font-family:'Prata',serif;font-size:13px;color:rgba(255,248,238,.4);margin:4px 0}
+.duel-b{font-family:'Prata',serif;font-size:clamp(18px,5vw,22px);color:#B79BFF;line-height:1.25}
+.duel-foot{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:16px}
+.duel-price{display:inline-block;padding:8px 15px;border-radius:999px;font-size:14px;font-weight:700;
+  color:var(--gold);background:rgba(255,194,75,.08);border:1px solid rgba(255,194,75,.35)}
+.btn-duel{padding:11px 20px;font-size:14px}
+
+/* прямой эфир */
+.live{display:flex;align-items:center;gap:16px;margin-top:14px;padding:18px;
+  border-radius:22px;text-decoration:none;position:relative;
+  background:linear-gradient(100deg,rgba(255,0,51,.14),rgba(255,0,51,.05));
+  border:1px solid rgba(255,0,51,.4);transition:border-color .3s,transform .15s}
+.live:hover{border-color:rgba(255,0,51,.75)}
+.live:active{transform:scale(.99)}
+.live-icon svg{width:56px;height:40px;display:block;filter:drop-shadow(0 4px 14px rgba(255,0,51,.5))}
+.live-text{display:flex;flex-direction:column;gap:2px}
+.live-text small{font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:#FF7092}
+.live-text b{font-family:'Prata',serif;font-weight:400;font-size:21px;color:var(--paper)}
+.live-text i{font-style:normal;font-size:13px;color:var(--muted)}
+.live-dot{position:absolute;right:20px;top:50%;transform:translateY(-50%);
+  width:11px;height:11px;border-radius:50%;background:#FF0033;
+  box-shadow:0 0 0 0 rgba(255,0,51,.6);animation:live-pulse 2s ease-out infinite}
+@keyframes live-pulse{
+  70%{box-shadow:0 0 0 12px rgba(255,0,51,0)}
+  100%{box-shadow:0 0 0 0 rgba(255,0,51,0)}
+}
+
+.pack-hint{font-size:12.5px;color:var(--gold);line-height:1.55;margin:-8px 0 16px;
+  padding:11px 14px;border-radius:14px;
+  background:rgba(255,194,75,.08);border:1px solid rgba(255,194,75,.28)}
+
+/* Декоративное перо не должно создавать горизонтальную прокрутку.
+   overflow-x на html ставить нельзя — сломается sticky у скролл-стиха,
+   поэтому подрезаем ровно тот блок, где перо и лежит. */
+.vote-head{overflow:hidden}
+@media (max-width:520px){
+  .quill-ghost{width:150px;height:150px;right:-6px;top:-16px;opacity:.07}
+}

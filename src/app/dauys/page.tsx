@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
+import { Duels } from '@/components/Duels';
 import { VoteSection } from '@/components/VoteSection';
 import { loadSettings, loadTeams, whatsappBase } from '@/lib/content';
+import { loadDuels } from '@/lib/duels';
 import { loadCounts } from '@/lib/repo';
 import { buildTeams } from '@/lib/votes';
 
@@ -13,10 +15,11 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 
 export default async function DauysPage() {
-  const [{ teams }, { settings }, { counts }] = await Promise.all([
+  const [{ teams }, { settings }, { counts }, { duels }] = await Promise.all([
     loadTeams(),
     loadSettings(),
     loadCounts(),
+    loadDuels(),
   ]);
 
   // buildTeams отсекает разбивку «заявлено / подтверждено / корректировка» —
@@ -34,6 +37,8 @@ export default async function DauysPage() {
         lead={settings.voteLead}
         note={settings.voteNote}
       />
+
+      <Duels duels={duels} title={settings.duelsTitle} youtubeUrl={settings.youtubeUrl} />
     </section>
   );
 }

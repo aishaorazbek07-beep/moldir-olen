@@ -1,14 +1,16 @@
-'use client';
+﻿'use client';
 
 import { useRouter } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
 import type { AdjustmentRow, AdminTeamRow, ClaimRow, ClaimSummary } from '@/lib/admin-data';
 import type { SiteSettings } from '@/lib/content';
+import type { Duel } from '@/lib/duels';
+import { DuelsTab } from './DuelsTab';
 import { dateTime, fmt, tenge } from '@/lib/format';
 
 const ADJUST_STEPS = [1, 10, 100, 1000];
 
-type Tab = 'claims' | 'teams' | 'content';
+type Tab = 'claims' | 'teams' | 'duels' | 'content';
 
 export function AdminPanel({
   teams,
@@ -16,6 +18,7 @@ export function AdminPanel({
   summary,
   adjustments,
   settings,
+  duels,
   dbOk,
 }: {
   teams: AdminTeamRow[];
@@ -23,6 +26,7 @@ export function AdminPanel({
   summary: ClaimSummary;
   adjustments: AdjustmentRow[];
   settings: SiteSettings;
+  duels: Duel[];
   dbOk: boolean;
 }) {
   const router = useRouter();
@@ -30,6 +34,8 @@ export function AdminPanel({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [flash, setFlash] = useState<string | null>(null);
+
+  const missingLinks = teams.filter((t) => t.isActive && !t.kaspiUrl.trim()).map((t) => t.name);
 
   const send = async (payload: Record<string, unknown>, okText?: string) => {
     setBusy(true);
@@ -78,6 +84,17 @@ export function AdminPanel({
           сохранить нельзя.
         </p>
       ) : null}
+
+      {/* Город без ссылки Kaspi — молчаливый отказ: кнопка оплаты есть,
+          а платить некуда. Показываем это первым делом. */}
+      {missingLinks.length > 0 ? (
+        <p className="banner bad">
+          {missingLinks.length === 1
+            ? `У города «${missingLinks[0]}» не задана ссылка Kaspi — за него нельзя проголосовать.`
+            : `Нет ссылки Kaspi у городов: ${missingLinks.join(', ')} — за них нельзя проголосовать.`}{' '}
+          Откройте вкладку «Города» и впишите ссылку.
+        </p>
+      ) : null}
       {error ? <p className="banner bad">{error}</p> : null}
       {flash ? <p className="banner good">{flash}</p> : null}
 
@@ -87,6 +104,9 @@ export function AdminPanel({
         </button>
         <button className={tab === 'teams' ? 'on' : ''} onClick={() => setTab('teams')} type="button">
           Города
+        </button>
+        <button className={tab === 'duels' ? 'on' : ''} onClick={() => setTab('duels')} type="button">
+          Дуэли
         </button>
         <button className={tab === 'content' ? 'on' : ''} onClick={() => setTab('content')} type="button">
           Тексты и цены
@@ -104,6 +124,8 @@ export function AdminPanel({
         />
       ) : tab === 'teams' ? (
         <TeamsTab teams={teams} busy={busy} send={send} />
+      ) : tab === 'duels' ? (
+        <DuelsTab duels={duels} busy={busy} send={send} />
       ) : (
         <ContentTab settings={settings} busy={busy} send={send} />
       )}

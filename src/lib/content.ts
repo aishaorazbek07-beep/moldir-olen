@@ -24,6 +24,14 @@ export interface SiteSettings {
   ticketsOpen: boolean;
   applicationsOpen: boolean;
   closedNotice: string;
+  venue: string;
+  authorName: string;
+  authorHandle: string;
+  contactPhone: string;
+  instagramUrl: string;
+  tiktokUrl: string;
+  youtubeUrl: string;
+  duelsTitle: string;
 }
 
 /** Ключи настроек, как они лежат в базе. */
@@ -41,6 +49,14 @@ export const SETTING_KEYS = [
   'tickets_open',
   'applications_open',
   'closed_notice',
+  'venue',
+  'author_name',
+  'author_handle',
+  'contact_phone',
+  'instagram_url',
+  'tiktok_url',
+  'youtube_url',
+  'duels_title',
 ] as const;
 
 export type SettingKey = (typeof SETTING_KEYS)[number];
@@ -126,6 +142,14 @@ export async function loadSettings(): Promise<{ settings: SiteSettings; ok: bool
         ticketsOpen: bool('tickets_open', FALLBACK_SETTINGS.ticketsOpen),
         applicationsOpen: bool('applications_open', FALLBACK_SETTINGS.applicationsOpen),
         closedNotice: str('closed_notice', FALLBACK_SETTINGS.closedNotice),
+        venue: str('venue', FALLBACK_SETTINGS.venue),
+        authorName: str('author_name', FALLBACK_SETTINGS.authorName),
+        authorHandle: str('author_handle', FALLBACK_SETTINGS.authorHandle),
+        contactPhone: str('contact_phone', FALLBACK_SETTINGS.contactPhone),
+        instagramUrl: str('instagram_url', FALLBACK_SETTINGS.instagramUrl),
+        tiktokUrl: str('tiktok_url', FALLBACK_SETTINGS.tiktokUrl),
+        youtubeUrl: str('youtube_url', FALLBACK_SETTINGS.youtubeUrl),
+        duelsTitle: str('duels_title', FALLBACK_SETTINGS.duelsTitle),
       },
       ok: true,
     };

@@ -1,4 +1,4 @@
-import type { SiteSettings, TeamRecord } from './content';
+﻿import type { SiteSettings, TeamRecord } from './content';
 
 /**
  * Резервная копия содержимого на случай, когда база недоступна.
@@ -14,7 +14,7 @@ export const FALLBACK_TEAMS: TeamRecord[] = [
   {
     id: 1,
     slug: 'astana',
-    name: 'Астана',
+    name: 'Астана қаласы',
     placeLabel: 'Финалист',
     colorIndex: 1,
     kaspiUrl: 'https://pay.kaspi.kz/pay/gyhuj7li',
@@ -24,7 +24,7 @@ export const FALLBACK_TEAMS: TeamRecord[] = [
   {
     id: 2,
     slug: 'pavlodar',
-    name: 'Павлодар',
+    name: 'Павлодар облысы',
     placeLabel: 'Финалист',
     colorIndex: 3,
     kaspiUrl: 'https://pay.kaspi.kz/pay/ap4zlsap',
@@ -45,4 +45,12 @@ export const FALLBACK_SETTINGS: SiteSettings = {
   ticketsOpen: false,
   applicationsOpen: false,
   closedNotice: 'Бұл бөлім әзірге жабық. Жақында ашылады.',
+  venue: 'Azure мейрамханасы, Алматы',
+  authorName: 'Мөлдір Айтбай',
+  authorHandle: '@maitbay',
+  contactPhone: '87016202086',
+  instagramUrl: 'https://instagram.com/moldir_alemm',
+  tiktokUrl: 'https://www.tiktok.com/@moldir_alemm',
+  youtubeUrl: 'https://youtube.com/@moldirolen',
+  duelsTitle: 'Алдағы дуэльдер',
 };

@@ -12,6 +12,7 @@ import {
   updateTeam,
   type SettingKey,
 } from '@/lib/content';
+import { clearPoster, createDuel, deleteDuel, savePoster, updateDuel } from '@/lib/duels';
 import { badRequest, readJson } from '@/lib/request';
 
 export const runtime = 'nodejs';
@@ -112,6 +113,53 @@ export async function POST(req: Request) {
         return NextResponse.json({ ok: true });
       }
 
+      case 'duel.create': {
+        const startsAt = str(body.startsAt);
+        if (!startsAt) return badRequest('Укажите дату и время');
+        const id = await createDuel(duelInput(body, startsAt));
+        return NextResponse.json({ ok: true, id });
+      }
+
+      case 'duel.update': {
+        const id = Number(body.id);
+        const startsAt = str(body.startsAt);
+        if (!Number.isInteger(id)) return badRequest('Дуэль не указана');
+        if (!startsAt) return badRequest('Укажите дату и время');
+        await updateDuel(id, duelInput(body, startsAt));
+        return NextResponse.json({ ok: true });
+      }
+
+      case 'duel.delete': {
+        const id = Number(body.id);
+        if (!Number.isInteger(id)) return badRequest('Дуэль не указана');
+        await deleteDuel(id);
+        return NextResponse.json({ ok: true });
+      }
+
+      case 'duel.poster': {
+        const id = Number(body.id);
+        const dataUrl = str(body.dataUrl);
+        if (!Number.isInteger(id)) return badRequest('Дуэль не указана');
+
+        if (!dataUrl) {
+          await clearPoster(id);
+          return NextResponse.json({ ok: true, cleared: true });
+        }
+
+        const match = /^data:(image\/(?:png|jpeg|jpg|webp|gif));base64,([A-Za-z0-9+/=]+)$/.exec(dataUrl);
+        if (!match) return badRequest('Афиша должна быть картинкой PNG, JPEG, WEBP или GIF');
+
+        // База — не файловое хранилище: крупные афиши тормозили бы и запись,
+        // и выдачу. Полтора мегабайта хватает для афиши с запасом.
+        const bytes = Math.floor((match[2].length * 3) / 4);
+        if (bytes > 1_500_000) {
+          return badRequest(`Афиша слишком большая (${Math.round(bytes / 1024)} КБ). Нужно до 1500 КБ.`);
+        }
+
+        await savePoster(id, match[1], match[2]);
+        return NextResponse.json({ ok: true, bytes });
+      }
+
       default:
         return badRequest('Неизвестное действие');
     }
@@ -125,6 +173,18 @@ export async function POST(req: Request) {
 
 function str(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
+}
+
+function duelInput(body: Record<string, unknown>, startsAt: string) {
+  const price = Number(body.price);
+  return {
+    startsAt,
+    teamA: str(body.teamA),
+    teamB: str(body.teamB),
+    price: Number.isFinite(price) && price >= 0 ? Math.floor(price) : 0,
+    ticketUrl: str(body.ticketUrl),
+    isActive: body.isActive !== false,
+  };
 }
 
 function colorIndex(value: unknown): number {

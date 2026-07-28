@@ -107,3 +107,7 @@ td.row-actions{display:flex;gap:6px;white-space:nowrap}
 .login-card p{color:var(--muted);font-size:13.5px;margin-bottom:20px}
 .text-link{background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;
   text-decoration:underline;font-family:'Inter',sans-serif;padding:0}
+
+.poster-preview{display:block;width:100%;max-width:420px;height:auto;border-radius:14px;
+  border:1px solid var(--line);margin-bottom:14px}
+.team-admin label input[type=file]{padding:10px;font-size:13px}

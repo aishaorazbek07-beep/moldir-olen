@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { loadAdjustments, loadAdminTeams, loadClaimSummary, loadClaims } from '@/lib/admin-data';
 import { isAdmin } from '@/lib/admin-guard';
 import { loadSettings, loadTeams } from '@/lib/content';
+import { loadDuels } from '@/lib/duels';
 import { AdminPanel } from './AdminPanel';
 import './admin.css';
 
@@ -16,7 +17,11 @@ export const dynamic = 'force-dynamic';
 export default async function AdminPage() {
   if (!(await isAdmin())) redirect('/admin/login');
 
-  const [{ teams, ok: teamsOk }, { settings }] = await Promise.all([loadTeams(true), loadSettings()]);
+  const [{ teams, ok: teamsOk }, { settings }, { duels }] = await Promise.all([
+    loadTeams(true),
+    loadSettings(),
+    loadDuels(true),
+  ]);
 
   // Если база недоступна, показываем панель в режиме только для чтения —
   // это лучше, чем страница с ошибкой, когда нужно быстро понять, что случилось.
@@ -65,6 +70,7 @@ export default async function AdminPage() {
       summary={summary}
       adjustments={adjustments}
       settings={settings}
+      duels={duels}
       dbOk={dbOk}
     />
   );
