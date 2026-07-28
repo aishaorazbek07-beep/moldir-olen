@@ -56,9 +56,15 @@ export function Duels({
 
               <div className="duel-body">
                 <p className="duel-when">{formatWhen(duel.startsAt)}</p>
-                <p className="duel-a">{duel.teamA}</p>
-                <p className="duel-vs">vs</p>
-                <p className="duel-b">{duel.teamB}</p>
+
+                {/* Сетка из трёх колонок: названия центрируются каждое в своей
+                    половине, метка посередине. Так строки стоят ровно, какой бы
+                    длины ни были названия областей. */}
+                <div className="duel-pair">
+                  <span className="duel-a">{duel.teamA}</span>
+                  <span className="duel-vs">vs</span>
+                  <span className="duel-b">{duel.teamB}</span>
+                </div>
 
                 <div className="duel-foot">
                   {duel.price > 0 ? <span className="duel-price">{tenge(duel.price)}</span> : null}
