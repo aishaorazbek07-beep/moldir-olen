@@ -1,12 +1,12 @@
 import type { Duel } from '@/lib/duels';
+import { CityPhoto } from './CityPhoto';
 import { Reveal } from './Reveal';
 
 /**
- * Блок «Алғашқы дуэль» — два города друг против друга с фотографиями.
+ * Табло ближайшего поединка: два города по обе стороны шва с меткой VS.
  *
- * Если снимка города ещё нет, вместо него идёт золотой градиент с силуэтом:
- * блок выглядит законченным и без фотографий, а поставить их можно потом
- * ссылкой в админке.
+ * Если снимка города ещё нет, вместо него силуэт — блок выглядит законченным
+ * и без фотографии, а поставить её можно потом ссылкой в админке.
  */
 export function FirstDuel({
   duel,
@@ -19,45 +19,47 @@ export function FirstDuel({
   photoA: string;
   photoB: string;
 }) {
-  const when = new Intl.DateTimeFormat('ru-RU', {
+  const at = new Date(duel.startsAt);
+  const day = new Intl.DateTimeFormat('ru-RU', {
     timeZone: 'Asia/Almaty',
     day: 'numeric',
     month: 'long',
-    year: 'numeric',
-  }).format(new Date(duel.startsAt));
-
+  }).format(at);
   const time = new Intl.DateTimeFormat('ru-RU', {
     timeZone: 'Asia/Almaty',
     hour: '2-digit',
     minute: '2-digit',
-  }).format(new Date(duel.startsAt));
+  }).format(at);
 
   return (
     <Reveal>
-      <div className="orn">
+      <div className="card-head">
         <i />
         <b>{label}</b>
         <i />
       </div>
 
-      <div className="vs-block">
-        <div className="vs-top">
+      <div className="board">
+        <div className="board-top">
           <Side name={duel.teamA} photo={photoA} />
-          <span className="vs-mid">VS</span>
+          <span className="board-seam" />
           <Side name={duel.teamB} photo={photoB} side="b" />
         </div>
 
-        <div className="vs-meta">
-          <span>
-            📅 <b>{when}</b>
-          </span>
-          <span>
-            🕖 <b>{time}</b>
-          </span>
+        <div className="board-meta">
+          <div>
+            <span>Күні</span>
+            <b>{day}</b>
+          </div>
+          <div>
+            <span>Уақыты</span>
+            <b>{time}</b>
+          </div>
           {duel.venue ? (
-            <span>
-              📍 <b>{duel.venue}</b>
-            </span>
+            <div>
+              <span>Орны</span>
+              <b>{duel.venue}</b>
+            </div>
           ) : null}
         </div>
       </div>
@@ -67,11 +69,10 @@ export function FirstDuel({
 
 function Side({ name, photo, side = 'a' }: { name: string; photo: string; side?: 'a' | 'b' }) {
   return (
-    <div className={`vs-side ${side}`}>
-      <span className={`vs-photo ${photo ? '' : 'blank'}`}>
+    <div className={`board-side ${side}`}>
+      <div className={`board-photo${photo ? '' : ' blank'}`}>
         {photo ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={photo} alt={name} loading="lazy" />
+          <CityPhoto src={photo} alt={name} />
         ) : (
           <svg viewBox="0 0 64 40" aria-hidden="true">
             <path
@@ -84,8 +85,10 @@ function Side({ name, photo, side = 'a' }: { name: string; photo: string; side?:
             />
           </svg>
         )}
-      </span>
-      <h3>{name}</h3>
+        <div className="board-name">
+          <b>{name}</b>
+        </div>
+      </div>
     </div>
   );
 }

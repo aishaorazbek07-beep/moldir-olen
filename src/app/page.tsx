@@ -11,6 +11,14 @@ import { tenge } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 
+/** Нумерация здесь оправдана: это настоящая последовательность этапов доды. */
+const STEPS = [
+  { title: 'Онлайн іріктеу', text: 'Өтінім тапсырған ақындар арасынан үздіктер таңдалады.' },
+  { title: 'Дуэль кештері', text: 'Әр кеште екі өңірдің ақындары сахнада бақ сынасады.' },
+  { title: 'Халық дауысы', text: 'Жеңімпазды көрермен дауысы шешеді — әр дауыс саналады.' },
+  { title: 'Суперфинал', text: 'Үздік екі қала бас жүлде үшін кездеседі.' },
+];
+
 const TILES = [
   { href: '/dauys', title: 'Дауыс беру', note: 'Ұнаған қалаңызға дауыс беріңіз', open: true },
   { href: '/duels', title: 'Келесі дуэльдер', note: 'Дуэльдер кестесімен танысыңыз', open: true },
@@ -89,6 +97,26 @@ export default async function HomePage() {
               <b>{tenge(settings.votePrice)}</b>
               <span>бір дауыс</span>
             </div>
+          </div>
+        </Reveal>
+      </section>
+
+      <section>
+        <Reveal>
+          <div className="sec-head">
+            <span className="eyebrow">Формат</span>
+            <h2 className="h2">Дода қалай өтеді</h2>
+          </div>
+          <div className="steps">
+            {STEPS.map((step, i) => (
+              <div className="step" key={step.title}>
+                <span className="dot">{String(i + 1).padStart(2, '0')}</span>
+                <div>
+                  <b>{step.title}</b>
+                  <p>{step.text}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </Reveal>
       </section>

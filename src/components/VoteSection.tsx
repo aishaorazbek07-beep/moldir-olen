@@ -1,8 +1,9 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { fmt, tenge } from '@/lib/format';
 import type { TeamWithStats } from '@/lib/votes';
+import { CityPhoto } from './CityPhoto';
 import { Reveal } from './Reveal';
 import { VoteFlow } from './VoteFlow';
 
@@ -106,10 +107,7 @@ function Slot({
       {index > 0 ? <span className="seam" /> : null}
       <div className={`vs-card${index % 2 ? ' b' : ''}${team.isLeader ? ' leading' : ''}`}>
         <div className="vs-photo-top">
-          {team.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={team.imageUrl} alt={team.name} loading="lazy" />
-          ) : null}
+          {team.imageUrl ? <CityPhoto src={team.imageUrl} alt={team.name} /> : null}
         </div>
 
         <div className="vs-body">

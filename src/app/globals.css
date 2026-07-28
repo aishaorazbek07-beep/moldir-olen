@@ -402,3 +402,26 @@ footer{padding:46px 20px calc(112px + env(safe-area-inset-bottom));text-align:ce
   *,*::before,*::after{animation-duration:.001s !important;transition-duration:.001s !important}
   html{scroll-behavior:auto}
 }
+
+/* Счёт: цифры не должны ломать карточку на четырёх-пяти знаках.
+   Табличные цифры одинаковой ширины, размер привязан к ширине экрана,
+   перенос запрещён. */
+.vs-count b{font-size:clamp(24px,8.4vw,42px);white-space:nowrap;letter-spacing:-.02em}
+@media (min-width:520px){.vs-count b{font-size:40px}}
+
+/* Мерцание золота — сдержанное: один медленный проход по титулу и по
+   рамке лидера. Больше блеска превратило бы премиум в ёлку. */
+@keyframes sheen{0%{background-position:-160% 0}100%{background-position:260% 0}}
+.t1 .ch,.t2 .ch{
+  background:linear-gradient(100deg,var(--gold) 20%,#FFF4D6 46%,var(--gold) 72%);
+  background-size:220% 100%;
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:ch-in .8s cubic-bezier(.16,.84,.24,1) forwards, sheen 6s linear 1.2s infinite}
+.vs-card.leading{position:relative}
+.vs-card.leading::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:2;
+  background:linear-gradient(100deg,transparent 42%,rgba(255,223,161,.12) 50%,transparent 58%);
+  background-size:220% 100%;animation:sheen 5s linear infinite}
+@media (prefers-reduced-motion:reduce){
+  .t1 .ch,.t2 .ch{animation:none;color:var(--gold-hi);background:none;-webkit-text-fill-color:currentColor}
+  .vs-card.leading::after{display:none}
+}
