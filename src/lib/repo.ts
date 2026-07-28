@@ -50,15 +50,15 @@ export interface NewClaim {
   quantity: number;
   amount: number;
   payerName: string;
-  receipt: string;
+  phone: string;
   ip: string | null;
 }
 
 export async function insertClaim(claim: NewClaim): Promise<number> {
   const rows = await sql<Array<{ id: number }>>`
-    insert into claims (kind, team_slug, quantity, amount, payer_name, receipt, ip)
+    insert into claims (kind, team_slug, quantity, amount, payer_name, phone, ip)
     values ('vote', ${claim.teamSlug}, ${claim.quantity}, ${claim.amount},
-            ${claim.payerName}, ${claim.receipt}, ${claim.ip})
+            ${claim.payerName}, ${claim.phone}, ${claim.ip})
     returning id
   `;
   return rows[0].id;
@@ -76,15 +76,18 @@ export async function countRecentClaims(ip: string | null, windowMinutes: number
 }
 
 /**
- * Не подавали ли уже этот номер чека.
+ * Не отправлена ли ровно такая же заявка только что.
  *
- * Один чек — один платёж. Повтор означает либо ошибку, либо попытку засчитать
- * одну оплату дважды; и то и другое должен увидеть человек, а не счётчик.
+ * С одного номера можно голосовать много раз — это нормально. А вот та же
+ * сумма с того же номера в течение минуты почти всегда означает двойное
+ * нажатие или обновление страницы, а не второй платёж.
  */
-export async function receiptAlreadyUsed(receipt: string): Promise<boolean> {
-  const clean = receipt.trim();
-  if (!clean) return false;
-
-  const rows = await sql`select 1 from claims where receipt = ${clean} limit 1`;
+export async function isDuplicateSubmit(phone: string, amount: number): Promise<boolean> {
+  const rows = await sql`
+    select 1 from claims
+    where phone = ${phone} and amount = ${amount}
+      and created_at > now() - interval '60 seconds'
+    limit 1
+  `;
   return rows.length > 0;
 }

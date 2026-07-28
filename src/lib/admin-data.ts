@@ -1,4 +1,4 @@
-import { sql } from './db';
+﻿import { sql } from './db';
 import type { TeamRecord } from './content';
 import { displayVotes, EMPTY_COUNTS, type TeamCounts } from './votes';
 
@@ -63,7 +63,7 @@ export interface ClaimRow {
   quantity: number;
   amount: number;
   payerName: string;
-  receipt: string;
+  phone: string;
   status: string;
   createdAt: string;
 }
@@ -75,11 +75,11 @@ export async function loadClaims(
   const rows =
     status === 'all'
       ? await sql<Array<Record<string, unknown>>>`
-          select id, team_slug, quantity, amount, payer_name, receipt, status, created_at
+          select id, team_slug, quantity, amount, payer_name, phone, status, created_at
           from claims order by created_at desc limit ${limit}
         `
       : await sql<Array<Record<string, unknown>>>`
-          select id, team_slug, quantity, amount, payer_name, receipt, status, created_at
+          select id, team_slug, quantity, amount, payer_name, phone, status, created_at
           from claims where status = ${status} order by created_at desc limit ${limit}
         `;
 
@@ -89,7 +89,7 @@ export async function loadClaims(
     quantity: Number(r.quantity),
     amount: Number(r.amount),
     payerName: String(r.payer_name ?? ''),
-    receipt: String(r.receipt ?? ''),
+    phone: String(r.phone ?? ''),
     status: String(r.status),
     createdAt: (r.created_at as Date).toISOString(),
   }));

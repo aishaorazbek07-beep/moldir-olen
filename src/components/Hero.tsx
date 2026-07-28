@@ -53,9 +53,6 @@ export function Hero({ tagline, tags }: { tagline: string; tags: string[] }) {
 
   return (
     <section className="hero" id="top">
-      <div className="beam" />
-      <div className="orb orb-1" />
-      <div className="orb orb-2" />
       <div className="side-verse">сөз · сахна · халық</div>
 
       <div className="hero-inner">
@@ -96,7 +93,7 @@ export function Hero({ tagline, tags }: { tagline: string; tags: string[] }) {
           <defs>
             <path id="circ" d="M50,50 m-38,0 a38,38 0 1,1 76,0 a38,38 0 1,1 -76,0" />
           </defs>
-          <text fill="rgba(255,248,238,.55)" fontSize="10.5" letterSpacing="2.5">
+          <text fill="rgba(138,101,32,.6)" fontSize="10.5" letterSpacing="2.5">
             <textPath href="#circ">МӨЛДІР ӨЛЕҢ · 2-МАУСЫМ · ПОЭЗИЯ ·</textPath>
           </text>
         </svg>

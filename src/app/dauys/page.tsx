@@ -1,7 +1,7 @@
-import type { Metadata } from 'next';
+﻿import type { Metadata } from 'next';
 import { Duels } from '@/components/Duels';
 import { VoteSection } from '@/components/VoteSection';
-import { loadSettings, loadTeams, whatsappBase } from '@/lib/content';
+import { loadSettings, loadTeams } from '@/lib/content';
 import { loadDuels } from '@/lib/duels';
 import { loadCounts } from '@/lib/repo';
 import { buildTeams } from '@/lib/votes';
@@ -31,7 +31,6 @@ export default async function DauysPage() {
       <VoteSection
         initialTeams={rows}
         votePrice={settings.votePrice}
-        whatsappBase={whatsappBase(settings)}
         eyebrow={settings.voteEyebrow}
         title={settings.voteTitle}
         lead={settings.voteLead}

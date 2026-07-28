@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { MAX_VOTE_AMOUNT, RATE_LIMIT, VOTE_PACKS } from '@/lib/config';
 import { loadSettings, loadTeams } from '@/lib/content';
+import { normalizePhone } from '@/lib/phone';
 import { badRequest, clientIp, readJson } from '@/lib/request';
-import { countRecentClaims, insertClaim, loadCounts, receiptAlreadyUsed } from '@/lib/repo';
+import { countRecentClaims, insertClaim, isDuplicateSubmit, loadCounts } from '@/lib/repo';
 import { buildTeams, votesForAmount } from '@/lib/votes';
 
 export const runtime = 'nodejs';
@@ -11,15 +12,15 @@ export const dynamic = 'force-dynamic';
 /**
  * Записывает заявку на голос.
  *
- * Оплата здесь НЕ проверяется: по решению организаторов её сверяют вручную по
- * скриншотам в WhatsApp и номеру чека. Значит заявка означает «человек сказал,
- * что заплатил», а не «деньги получены». Отсюда всё остальное в этом файле:
+ * Оплата здесь НЕ проверяется: организаторы сверяют её вручную по выписке
+ * Kaspi. Значит заявка означает «человек сказал, что заплатил», а не «деньги
+ * получены». Отсюда всё остальное в этом файле:
  *
  *   — заявка пишется со статусом claimed и может быть отклонена в админке,
  *     тогда голос уходит из счётчика;
- *   — номер чека обязателен: у заплатившего он под рукой, выдуманный не
- *     сойдётся с выпиской;
- *   — один чек не может быть засчитан дважды;
+ *   — ФИО и номер отправителя обязательны: по ним платёж и ищут в выписке;
+ *   — повтор той же суммы с того же номера в пределах минуты отсекается —
+ *     это двойное нажатие, а не второй платёж;
  *   — ограничение по адресу, иначе счётчик накрутят скриптом за минуту.
  */
 export async function POST(req: Request) {
@@ -27,7 +28,7 @@ export async function POST(req: Request) {
     teamSlug?: unknown;
     amount?: unknown;
     payerName?: unknown;
-    receipt?: unknown;
+    phone?: unknown;
   }>(req);
   if (!body) return badRequest('Сұраныс дұрыс емес');
 
@@ -37,18 +38,17 @@ export async function POST(req: Request) {
   const team = teams.find((t) => t.slug === body.teamSlug);
   const amount = Math.floor(Number(body.amount));
   const payerName = typeof body.payerName === 'string' ? body.payerName.trim().slice(0, 120) : '';
-  const receipt = typeof body.receipt === 'string' ? body.receipt.trim().slice(0, 60) : '';
+  const phone = normalizePhone(typeof body.phone === 'string' ? body.phone : null);
 
   if (!team) return badRequest('Қала таңдалмаған');
   if (!Number.isFinite(amount) || amount < settings.votePrice) {
     return badRequest(`Ең аз сома — ${settings.votePrice} ₸`);
   }
   if (amount > MAX_VOTE_AMOUNT) return badRequest('Сома тым үлкен');
-  if (payerName.length < 2) return badRequest('Kaspi-дегі атыңызды жазыңыз');
-  if (receipt.length < 4) return badRequest('Чек нөмірін толық жазыңыз');
+  if (payerName.length < 3) return badRequest('Аты-жөніңізді толық жазыңыз');
+  if (!phone) return badRequest('Төлем жасалған нөмірді дұрыс енгізіңіз');
 
   const quantity = votesForAmount(amount, settings.votePrice);
-  if (quantity < 1) return badRequest(`Ең аз сома — ${settings.votePrice} ₸`);
 
   // Принимаем только суммы, ровно соответствующие разрешённым пакетам.
   // Проверка на сервере, а не только в интерфейсе: иначе правило обходится
@@ -67,14 +67,14 @@ export async function POST(req: Request) {
       );
     }
 
-    if (await receiptAlreadyUsed(receipt)) {
+    if (await isDuplicateSubmit(phone, amount)) {
       return NextResponse.json(
-        { error: 'Бұл чек нөмірі бұрын тіркелген. Әр төлемнің чегі бір рет есептеледі.' },
+        { error: 'Дәл осындай өтінім жаңа ғана тіркелді. Қайта жіберудің қажеті жоқ.' },
         { status: 409 },
       );
     }
 
-    await insertClaim({ teamSlug: team.slug, quantity, amount, payerName, receipt, ip });
+    await insertClaim({ teamSlug: team.slug, quantity, amount, payerName, phone, ip });
   } catch {
     return NextResponse.json(
       { error: 'Дауысты тіркеу мүмкін болмады. Ұйымдастырушыларға жазыңыз.' },

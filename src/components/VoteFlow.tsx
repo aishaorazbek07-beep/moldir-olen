@@ -3,21 +3,21 @@
 import { useEffect, useState } from 'react';
 import { FIRST_VOTE_PACKS, VOTE_PACKS } from '@/lib/config';
 import { fmt, tenge } from '@/lib/format';
+import { normalizePhone } from '@/lib/phone';
 import type { TeamWithStats } from '@/lib/votes';
-import { Sheet, SheetCta } from './Sheet';
+import { PhoneField, Sheet, SheetCta } from './Sheet';
 
 /**
  * Шаги в том порядке, в котором их проходит человек:
  *
  *   pay    выбран город → пакет голосов → кнопка ведёт на Kaspi ЭТОГО города
- *   proof  номер чека и имя → предупреждение → WhatsApp, здесь же пишется заявка
+ *   proof  ФИО и номер, с которого отправлена оплата — здесь пишется заявка
  *   done   заявка принята, предложение проголосовать ещё
  *
  * Город выбирается ДО оплаты: ссылка Kaspi у каждого своя.
  *
- * Оплата автоматически не проверяется, поэтому весь расчёт на то, чтобы
- * заплатить было проще, чем сымитировать. Номер чека — ключевой шаг: у
- * заплатившего он под рукой, а выдуманный не сойдётся с выпиской.
+ * Оплата автоматически не проверяется — организаторы сверяют её по выписке
+ * Kaspi. Поэтому ФИО и номер отправителя обязательны: по ним платёж и ищут.
  */
 type Step = 'pay' | 'proof' | 'done';
 
@@ -29,14 +29,12 @@ export function VoteFlow({
   onTeamsChange,
   activeSlug,
   onClose,
-  whatsappBase,
   votePrice,
 }: {
   teams: TeamWithStats[];
   onTeamsChange: (teams: TeamWithStats[]) => void;
   activeSlug: string | null;
   onClose: () => void;
-  whatsappBase: string;
   votePrice: number;
 }) {
   const team = teams.find((t) => t.slug === activeSlug) ?? null;
@@ -44,7 +42,7 @@ export function VoteFlow({
   const [step, setStep] = useState<Step>('pay');
   const [votes, setVotes] = useState(1);
   const [payerName, setPayerName] = useState('');
-  const [receipt, setReceipt] = useState('');
+  const [phone, setPhone] = useState('+7 ');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [granted, setGranted] = useState(0);
@@ -52,9 +50,9 @@ export function VoteFlow({
   /**
    * Пакеты 5 и 10 открываются только после первого отданного голоса.
    *
-   * Отметка живёт в localStorage: человек уже прошёл путь целиком — заплатил,
-   * отправил чек — и понимает, за что платит. Предлагать десять голосов
-   * тому, кто ещё ни разу не проходил этот путь, преждевременно.
+   * Отметка живёт в localStorage: человек уже прошёл путь целиком и понимает,
+   * за что платит. Предлагать десять голосов тому, кто ещё ни разу этого не
+   * делал, преждевременно.
    */
   const [unlocked, setUnlocked] = useState(false);
 
@@ -68,13 +66,13 @@ export function VoteFlow({
 
   const packs = unlocked ? VOTE_PACKS : FIRST_VOTE_PACKS;
   const amount = votes * votePrice;
-  const proofReady = receipt.trim().length >= 4 && payerName.trim().length >= 2;
+  const proofReady = payerName.trim().length >= 3 && Boolean(normalizePhone(phone));
 
   const close = () => {
     setStep('pay');
     setVotes(1);
     setPayerName('');
-    setReceipt('');
+    setPhone('+7 ');
     setError(null);
     setGranted(0);
     onClose();
@@ -99,18 +97,6 @@ export function VoteFlow({
     setBusy(true);
     setError(null);
 
-    const text =
-      `Мөлдір өлең · дауыс\n` +
-      `Қала: ${team.name}\n` +
-      `Сома: ${fmt(amount)} ₸ (${votes} дауыс)\n` +
-      `Аты-жөнім: ${payerName.trim()}\n` +
-      `Чек нөмірі: ${receipt.trim()}\n` +
-      `\nТөлем түбіртегінің скриншотын осы хатқа тіркеңіз.`;
-
-    if (whatsappBase) {
-      window.open(`${whatsappBase}?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
-    }
-
     try {
       const res = await fetch('/api/vote/claim', {
         method: 'POST',
@@ -119,7 +105,7 @@ export function VoteFlow({
           teamSlug: team.slug,
           amount,
           payerName: payerName.trim(),
-          receipt: receipt.trim(),
+          phone,
         }),
       });
 
@@ -155,7 +141,6 @@ export function VoteFlow({
 
   const voteAgain = (pack: number) => {
     setVotes(pack);
-    setReceipt('');
     setError(null);
     setStep('pay');
   };
@@ -199,13 +184,13 @@ export function VoteFlow({
         </>
       ) : step === 'proof' ? (
         <>
-          <h3 className="serif">Төлемді растаңыз</h3>
+          <h3 className="serif">Мәліметтеріңізді қалдырыңыз</h3>
 
           <div className="warn-box">
             <b>Төлемей дауыс есептелмейді</b>
             <p>
-              Дода аяқталған соң біз <b>барлық төлемді бір-бірлеп тексереміз</b>. Чек нөмірі
-              бойынша төлем табылмаса, дауыс санақтан алынып тасталады және нәтижеге әсер етпейді.
+              Дода аяқталған соң біз <b>барлық төлемді тексереміз</b>. Аты-жөніңіз бен
+              нөміріңіз бойынша төлем табылмаса, дауыс санақтан алынып тасталады.
             </p>
           </div>
 
@@ -225,51 +210,34 @@ export function VoteFlow({
           </div>
 
           <div className="field">
-            <label htmlFor="receipt">Kaspi чегінің нөмірі</label>
-            <input
-              id="receipt"
-              type="text"
-              inputMode="numeric"
-              placeholder="Мысалы: 1126827352"
-              value={receipt}
-              onChange={(e) => setReceipt(e.target.value)}
-            />
-            <p className="phone-hint">
-              Kaspi қосымшасында төлем түбіртегін ашсаңыз, нөмір жоғарғы жағында тұр.
-            </p>
-          </div>
-
-          <div className="field">
-            <label htmlFor="payer-name">Kaspi-дегі атыңыз</label>
+            <label htmlFor="payer-name">Аты-жөніңіз</label>
             <input
               id="payer-name"
               type="text"
-              placeholder="Айдана С."
+              autoComplete="name"
+              placeholder="Айдана Серікқызы"
               value={payerName}
               onChange={(e) => setPayerName(e.target.value)}
             />
-            <p className="phone-hint">Төлемді тексеру кезінде табу үшін керек.</p>
+            <p className="phone-hint">Kaspi-де көрсетілгендей жазыңыз.</p>
           </div>
 
-          <p className="sub">
-            Түйме WhatsApp-ты ашады — сол жерге түбіртектің скриншотын жіберіңіз.
-          </p>
+          <PhoneField value={phone} onChange={setPhone} label="Төлем жасалған нөмір" />
 
           <SheetCta>
             {error ? <p className="form-error">{error}</p> : null}
-            {!whatsappBase ? <p className="form-error">WhatsApp нөмірі әзірге қосылмаған.</p> : null}
             {!proofReady ? (
               <p className="phone-hint" style={{ margin: '0 0 10px' }}>
-                Чек нөмірі мен атыңызды толтырыңыз.
+                Аты-жөніңіз бен нөміріңізді толтырыңыз.
               </p>
             ) : null}
             <button
-              className="btn btn-wa btn-block"
+              className="btn btn-fire btn-block"
               onClick={() => void submitClaim()}
               disabled={busy || !proofReady}
               type="button"
             >
-              {busy ? 'Тіркелуде...' : 'WhatsApp-қа скриншот жіберу'}
+              {busy ? 'Тіркелуде...' : 'Дауысты тіркеу'}
             </button>
             <button
               className="btn btn-glass btn-block btn-back"
@@ -286,8 +254,8 @@ export function VoteFlow({
             <div className="check">✓</div>
             <h3 className="serif">Дауысыңыз тіркелді</h3>
             <p className="sub">
-              {team.name} — {fmt(granted)} дауыс. Скриншот WhatsApp-қа жіберілгеннен кейін төлем
-              тексеріледі.
+              {team.name} — {fmt(granted)} дауыс. Рахмет! Төлеміңіз тексерілгеннен кейін дауыс
+              түпкілікті есептеледі.
             </p>
           </div>
 

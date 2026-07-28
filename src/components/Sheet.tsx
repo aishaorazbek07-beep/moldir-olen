@@ -63,14 +63,18 @@ export function PhoneField({
   value,
   onChange,
   disabled,
+  label = 'Kaspi нөміріңіз',
+  hint = 'Төлем жасалған нөмірді жазыңыз.',
 }: {
   value: string;
   onChange: (v: string) => void;
   disabled?: boolean;
+  label?: string;
+  hint?: string;
 }) {
   return (
     <div className="field">
-      <label htmlFor="kaspi-phone">Kaspi нөміріңіз</label>
+      <label htmlFor="kaspi-phone">{label}</label>
       <input
         id="kaspi-phone"
         type="tel"
@@ -86,7 +90,7 @@ export function PhoneField({
           requestAnimationFrame(() => el.setSelectionRange(el.value.length, el.value.length));
         }}
       />
-      <p className="phone-hint">Шот осы нөмірдің Kaspi қосымшасына жіберіледі.</p>
+      <p className="phone-hint">{hint}</p>
     </div>
   );
 }

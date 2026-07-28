@@ -10,7 +10,6 @@ import { VoteFlow } from './VoteFlow';
 export function VoteSection({
   initialTeams,
   votePrice,
-  whatsappBase,
   eyebrow,
   title,
   lead,
@@ -18,7 +17,6 @@ export function VoteSection({
 }: {
   initialTeams: TeamWithStats[];
   votePrice: number;
-  whatsappBase: string;
   eyebrow: string;
   title: string;
   lead: string;
@@ -112,7 +110,6 @@ export function VoteSection({
           onTeamsChange={setTeams}
           activeSlug={activeSlug}
           onClose={() => setActiveSlug(null)}
-          whatsappBase={whatsappBase}
           votePrice={votePrice}
         />
       ) : null}

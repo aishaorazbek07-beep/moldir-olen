@@ -7,6 +7,7 @@ import type { SiteSettings } from '@/lib/content';
 import type { Duel } from '@/lib/duels';
 import { DuelsTab } from './DuelsTab';
 import { dateTime, fmt, tenge } from '@/lib/format';
+import { maskPhone } from '@/lib/phone';
 
 const ADJUST_STEPS = [1, 10, 100, 1000];
 
@@ -251,7 +252,7 @@ function ClaimsTab({
 
       <h2>Заявки</h2>
       <p className="admin-note">
-        Ищите платёж по номеру чека в выписке Kaspi. Нашли — «подтвердить»; нет —
+        Ищите платёж по имени и номеру отправителя в выписке Kaspi. Нашли — «подтвердить»; нет —
         «отклонить», и голос сразу уходит со счётчика.
       </p>
 
@@ -278,7 +279,7 @@ function ClaimsTab({
               <tr>
                 <th>Когда</th>
                 <th>Город</th>
-                <th>Чек</th>
+                <th>Телефон</th>
                 <th>Имя</th>
                 <th>Сумма</th>
                 <th>Голосов</th>
@@ -291,7 +292,7 @@ function ClaimsTab({
                 <tr key={claim.id}>
                   <td>{dateTime(claim.createdAt)}</td>
                   <td>{nameBySlug.get(claim.teamSlug ?? '') ?? claim.teamSlug ?? '—'}</td>
-                  <td className="mono">{claim.receipt || '—'}</td>
+                  <td className="mono">{claim.phone ? maskPhone(claim.phone) : '—'}</td>
                   <td>{claim.payerName || '—'}</td>
                   <td>{tenge(claim.amount)}</td>
                   <td>{fmt(claim.quantity)}</td>
