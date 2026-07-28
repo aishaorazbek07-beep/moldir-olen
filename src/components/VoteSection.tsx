@@ -1,8 +1,9 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { fmt, tenge } from '@/lib/format';
 import type { TeamWithStats } from '@/lib/votes';
+import { Quill, QuillDivider } from './Quill';
 import { Reveal } from './Reveal';
 import { VoteFlow } from './VoteFlow';
 
@@ -50,13 +51,15 @@ export function VoteSection({
 
   return (
     <>
-      <Reveal>
+      <Reveal className="vote-head">
+        <Quill className="quill-ghost" />
         <span className="eyebrow">{eyebrow}</span>
         <h2 className="h2">{title}</h2>
         <p className="lead">{lead}</p>
         <div className="vote-note">
           ✦ 1 дауыс — {tenge(votePrice)} · {note}
         </div>
+        <QuillDivider />
       </Reveal>
 
       <Reveal>

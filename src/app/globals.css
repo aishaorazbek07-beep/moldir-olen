@@ -171,6 +171,16 @@ section{position:relative;z-index:1;padding:76px 20px}
 .prize-line b{font-family:'Prata',serif;font-weight:400;font-size:19px;color:var(--gold);display:block}
 .prize-line small{color:var(--muted);font-size:12.5px}
 
+/* перо-разделитель */
+.quill-divider{display:flex;align-items:center;gap:14px;margin:22px 0 6px}
+.quill-divider i{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--line))}
+.quill-divider i:last-child{background:linear-gradient(90deg,var(--line),transparent)}
+.quill-mark{width:38px;height:38px;flex:0 0 38px;filter:drop-shadow(0 3px 12px rgba(255,194,75,.3))}
+
+/* крупное перо-водяной знак за заголовком */
+.quill-ghost{position:absolute;right:-18px;top:-26px;width:190px;height:190px;
+  opacity:.09;pointer-events:none;z-index:0;transform:rotate(-8deg)}
+
 /* ============ арена: города друг напротив друга ============ */
 .arena{display:grid;gap:12px;margin-top:8px}
 .arena.cols-2{grid-template-columns:1fr 1fr}
@@ -470,3 +480,6 @@ footer .serif{font-size:24px;color:var(--paper);display:block;margin-bottom:8px}
   .verse-scroll{height:auto}
   .verse-text .w{color:var(--paper)}
 }
+
+.vote-head{position:relative}
+.vote-head > *:not(.quill-ghost){position:relative;z-index:1}
