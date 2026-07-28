@@ -1,4 +1,4 @@
-import { sql } from './db';
+﻿import { sql } from './db';
 import { FALLBACK_SETTINGS, FALLBACK_TEAMS } from './fallback';
 
 export interface TeamRecord {
@@ -10,6 +10,7 @@ export interface TeamRecord {
   kaspiUrl: string;
   displayOrder: number;
   isActive: boolean;
+  imageUrl: string;
 }
 
 export interface SiteSettings {
@@ -32,6 +33,15 @@ export interface SiteSettings {
   tiktokUrl: string;
   youtubeUrl: string;
   duelsTitle: string;
+  poetsTitle: string;
+  poetsLead: string;
+  booksTitle: string;
+  booksLead: string;
+  aboutTitle: string;
+  aboutText: string;
+  heroVerse: string;
+  footerVerse: string;
+  firstDuelLabel: string;
 }
 
 /** Ключи настроек, как они лежат в базе. */
@@ -57,6 +67,15 @@ export const SETTING_KEYS = [
   'tiktok_url',
   'youtube_url',
   'duels_title',
+  'poets_title',
+  'poets_lead',
+  'books_title',
+  'books_lead',
+  'about_title',
+  'about_text',
+  'hero_verse',
+  'footer_verse',
+  'first_duel_label',
 ] as const;
 
 export type SettingKey = (typeof SETTING_KEYS)[number];
@@ -80,15 +99,16 @@ export async function loadTeams(includeHidden = false): Promise<{ teams: TeamRec
       kaspi_url: string;
       display_order: number;
       is_active: boolean;
+      image_url: string;
     };
 
     const rows = includeHidden
       ? await sql<Row[]>`
-          select id, slug, name, place_label, color_index, kaspi_url, display_order, is_active
+          select id, slug, name, place_label, color_index, kaspi_url, display_order, is_active, image_url
           from teams order by display_order, id
         `
       : await sql<Row[]>`
-          select id, slug, name, place_label, color_index, kaspi_url, display_order, is_active
+          select id, slug, name, place_label, color_index, kaspi_url, display_order, is_active, image_url
           from teams where is_active order by display_order, id
         `;
 
@@ -102,6 +122,7 @@ export async function loadTeams(includeHidden = false): Promise<{ teams: TeamRec
         kaspiUrl: r.kaspi_url,
         displayOrder: r.display_order,
         isActive: r.is_active,
+        imageUrl: r.image_url ?? '',
       })),
       ok: true,
     };
@@ -115,7 +136,12 @@ export async function loadSettings(): Promise<{ settings: SiteSettings; ok: bool
     const rows = await sql<Array<{ key: string; value: string }>>`select key, value from settings`;
     const map = new Map(rows.map((r) => [r.key, r.value]));
 
-    const str = (key: SettingKey, dflt: string) => map.get(key)?.trim() || dflt;
+    // В SQL перевод строки записан двумя символами \\n — в тексте он должен
+    // быть настоящим переносом, иначе на странице печатается `\\n`.
+    // В настройках перенос строки хранится двумя символами: обратная косая
+    // и n. Иначе в поле админки его не наберёшь. Здесь превращаем в настоящий.
+    const str = (key: SettingKey, dflt: string) =>
+      (map.get(key)?.trim() || dflt).replace(/\\n/g, '\n');
     const bool = (key: SettingKey, dflt: boolean) => {
       const raw = map.get(key)?.trim().toLowerCase();
       if (raw === 'true') return true;
@@ -149,7 +175,16 @@ export async function loadSettings(): Promise<{ settings: SiteSettings; ok: bool
         instagramUrl: str('instagram_url', FALLBACK_SETTINGS.instagramUrl),
         tiktokUrl: str('tiktok_url', FALLBACK_SETTINGS.tiktokUrl),
         youtubeUrl: str('youtube_url', FALLBACK_SETTINGS.youtubeUrl),
-        duelsTitle: str('duels_title', FALLBACK_SETTINGS.duelsTitle),
+duelsTitle: str('duels_title', FALLBACK_SETTINGS.duelsTitle),
+        poetsTitle: str('poets_title', FALLBACK_SETTINGS.poetsTitle),
+        poetsLead: str('poets_lead', FALLBACK_SETTINGS.poetsLead),
+        booksTitle: str('books_title', FALLBACK_SETTINGS.booksTitle),
+        booksLead: str('books_lead', FALLBACK_SETTINGS.booksLead),
+        aboutTitle: str('about_title', FALLBACK_SETTINGS.aboutTitle),
+        aboutText: str('about_text', FALLBACK_SETTINGS.aboutText),
+        heroVerse: str('hero_verse', FALLBACK_SETTINGS.heroVerse),
+        footerVerse: str('footer_verse', FALLBACK_SETTINGS.footerVerse),
+        firstDuelLabel: str('first_duel_label', FALLBACK_SETTINGS.firstDuelLabel),
       },
       ok: true,
     };

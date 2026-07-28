@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+﻿import { describe, expect, it } from 'vitest';
 import type { TeamRecord } from './content';
 import {
   buildTeams,
@@ -26,6 +26,7 @@ const team = (slug: string, over: Partial<TeamRecord> = {}): TeamRecord => ({
   kaspiUrl: 'https://pay.kaspi.kz/pay/x',
   displayOrder: 1,
   isActive: true,
+  imageUrl: '',
   ...over,
 });
 

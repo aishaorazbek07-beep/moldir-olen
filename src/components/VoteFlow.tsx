@@ -1,10 +1,11 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { FIRST_VOTE_PACKS, VOTE_PACKS } from '@/lib/config';
 import { fmt, tenge } from '@/lib/format';
 import { normalizePhone } from '@/lib/phone';
 import type { TeamWithStats } from '@/lib/votes';
+import { Celebrate } from './Celebrate';
 import { PhoneField, Sheet, SheetCta } from './Sheet';
 
 /**
@@ -251,12 +252,20 @@ export function VoteFlow({
       ) : (
         <>
           <div className="pay-ok">
+            <Celebrate />
             <div className="check">✓</div>
             <h3 className="serif">Дауысыңыз тіркелді</h3>
             <p className="sub">
-              {team.name} — {fmt(granted)} дауыс. Рахмет! Төлеміңіз тексерілгеннен кейін дауыс
-              түпкілікті есептеледі.
+              {team.name} — {fmt(granted)} дауыс.
             </p>
+
+            <div className="thanks">
+              <b>Қолдағаныңыз үшін рахмет!</b>
+              <span>
+                Сіздің дауысыңыз — ақынға деген қолдау. Төлеміңіз тексерілгеннен кейін дауыс
+                түпкілікті есептеледі.
+              </span>
+            </div>
           </div>
 
           <div className="again">

@@ -1,4 +1,4 @@
-import { sql } from './db';
+﻿import { sql } from './db';
 
 export interface Duel {
   id: number;
@@ -7,6 +7,7 @@ export interface Duel {
   teamB: string;
   price: number;
   ticketUrl: string;
+  venue: string;
   hasPoster: boolean;
   isActive: boolean;
   displayOrder: number;
@@ -26,6 +27,7 @@ export async function loadDuels(includeHidden = false): Promise<{ duels: Duel[];
       team_b: string;
       price: number;
       ticket_url: string;
+      venue: string;
       has_poster: boolean;
       is_active: boolean;
       display_order: number;
@@ -33,12 +35,12 @@ export async function loadDuels(includeHidden = false): Promise<{ duels: Duel[];
 
     const rows = includeHidden
       ? await sql<Row[]>`
-          select id, starts_at, team_a, team_b, price, ticket_url,
+          select id, starts_at, team_a, team_b, price, ticket_url, venue,
                  (poster_data <> '') as has_poster, is_active, display_order
           from duels order by display_order, starts_at
         `
       : await sql<Row[]>`
-          select id, starts_at, team_a, team_b, price, ticket_url,
+          select id, starts_at, team_a, team_b, price, ticket_url, venue,
                  (poster_data <> '') as has_poster, is_active, display_order
           from duels where is_active order by display_order, starts_at
         `;
@@ -51,6 +53,7 @@ export async function loadDuels(includeHidden = false): Promise<{ duels: Duel[];
         teamB: r.team_b,
         price: Number(r.price),
         ticketUrl: r.ticket_url,
+        venue: r.venue ?? '',
         hasPoster: r.has_poster,
         isActive: r.is_active,
         displayOrder: r.display_order,

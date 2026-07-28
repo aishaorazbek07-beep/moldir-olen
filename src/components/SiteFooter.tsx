@@ -1,4 +1,4 @@
-import type { SiteSettings } from '@/lib/content';
+﻿import type { SiteSettings } from '@/lib/content';
 import { formatPhoneForDisplay, normalizePhone } from '@/lib/phone';
 
 /**
@@ -15,6 +15,17 @@ export function SiteFooter({ settings }: { settings: SiteSettings }) {
 
   return (
     <footer>
+      {settings.footerVerse ? (
+        <p className="footer-verse">
+          {settings.footerVerse.split('\n').map((line, i) => (
+            <span key={i}>
+              {line}
+              <br />
+            </span>
+          ))}
+        </p>
+      ) : null}
+
       <div className="footer-mark">
         <i>✦</i>
         <span className="serif">Мөлдір өлең</span>

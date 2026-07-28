@@ -20,6 +20,7 @@ export const FALLBACK_TEAMS: TeamRecord[] = [
     kaspiUrl: 'https://pay.kaspi.kz/pay/gyhuj7li',
     displayOrder: 1,
     isActive: true,
+    imageUrl: '',
   },
   {
     id: 2,
@@ -30,6 +31,7 @@ export const FALLBACK_TEAMS: TeamRecord[] = [
     kaspiUrl: 'https://pay.kaspi.kz/pay/ap4zlsap',
     displayOrder: 2,
     isActive: true,
+    imageUrl: '',
   },
 ];
 
@@ -52,5 +54,14 @@ export const FALLBACK_SETTINGS: SiteSettings = {
   instagramUrl: 'https://instagram.com/moldir_alemm',
   tiktokUrl: 'https://www.tiktok.com/@moldir_alemm',
   youtubeUrl: 'https://youtube.com/@moldirolen',
-  duelsTitle: 'Алдағы дуэльдер',
+duelsTitle: 'Алдағы дуэльдер',
+  poetsTitle: 'Ақындар туралы',
+  poetsLead: 'Додаға қатысып жүрген ақындармен танысыңыз.',
+  booksTitle: 'Кітап алу',
+  booksLead: 'Жоба ақындарының жинақтары.',
+  aboutTitle: 'Жоба туралы',
+  aboutText: 'Мөлдір өлең — қазақ поэзиясын сахнаға шығаратын ұлттық жоба. Әр кеш — екі өңірдің ақындары арасындағы дуэль. Жеңімпазды халық дауысы шешеді.',
+  heroVerse: 'Өлең – жүректің тілі, халықтың үні.\nМөлдір өлең – жаңа буынның жұлдызды жолы.',
+  footerVerse: 'Өлең – өлмейді, сөз – жоғалмайды.\nСебебі ол – халықпен бірге мәңгі жасайды.',
+  firstDuelLabel: 'Алғашқы дуэль',
 };

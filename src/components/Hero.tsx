@@ -1,19 +1,14 @@
-﻿'use client';
+'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef } from 'react';
+import { Quill } from './Quill';
 
-/** Заголовок собирается по буквам с нарастающей задержкой — как в исходнике. */
-function Letters({ word, delay, accentIndex = -1 }: { word: string; delay: number; accentIndex?: number }) {
+/** Заголовок собирается по буквам с нарастающей задержкой. */
+function Letters({ word, delay }: { word: string; delay: number }) {
   return (
     <>
       {[...word].map((char, i) => (
-        <span
-          // Буква может повторяться в слове, поэтому в ключе нужна позиция.
-          key={`${char}-${i}`}
-          className={`ch${i === accentIndex ? ' accent' : ''}`}
-          style={{ animationDelay: `${delay + i * 0.06}s` }}
-        >
+        <span key={`${char}-${i}`} className="ch" style={{ animationDelay: `${delay + i * 0.06}s` }}>
           {char}
         </span>
       ))}
@@ -21,84 +16,68 @@ function Letters({ word, delay, accentIndex = -1 }: { word: string; delay: numbe
   );
 }
 
-export function Hero({ tagline, tags }: { tagline: string; tags: string[] }) {
-  const t1 = useRef<HTMLDivElement>(null);
-  const t2 = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-    let ticking = false;
-    const onScroll = () => {
-      if (ticking) return;
-      ticking = true;
-
-      requestAnimationFrame(() => {
-        ticking = false;
-        const y = scrollY;
-        const vh = innerHeight;
-        if (y >= vh || !t1.current || !t2.current) return;
-
-        t1.current.style.transform = `translateX(${-y * 0.22}px)`;
-        t2.current.style.transform = `translateX(${y * 0.22}px)`;
-        const opacity = String(Math.max(0, 1 - y / (vh * 0.75)));
-        t1.current.style.opacity = opacity;
-        t2.current.style.opacity = opacity;
-      });
-    };
-
-    addEventListener('scroll', onScroll, { passive: true });
-    return () => removeEventListener('scroll', onScroll);
-  }, []);
-
+export function Hero({
+  tagline,
+  tags,
+  verse,
+}: {
+  tagline: string;
+  tags: string[];
+  verse: string;
+}) {
   return (
     <section className="hero" id="top">
-      <div className="side-verse">сөз · сахна · халық</div>
-
       <div className="hero-inner">
-        <span className="hero-eyebrow">{tagline}</span>
+        <Quill className="hero-quill" />
+
         <div className="title">
-          <div className="row t1" ref={t1}>
-            <Letters word="МӨЛДІР" delay={0.3} />
+          <div className="row t1">
+            <Letters word="Мөлдір" delay={0.25} />
           </div>
-          <div className="row t2" ref={t2}>
-            <Letters word="ӨЛЕҢ" delay={0.75} accentIndex={0} />
+          <div className="row t2">
+            <Letters word="өлең" delay={0.6} />
           </div>
         </div>
+
+        <p className="hero-tagline">{tagline}</p>
+
+        <div className="orn">
+          <i />
+          <b>✦</b>
+          <i />
+        </div>
+
+        {verse ? (
+          <p className="hero-verse">
+            {verse.split('\n').map((line, i) => (
+              <span key={i}>
+                {line}
+                <br />
+              </span>
+            ))}
+          </p>
+        ) : null}
+
         <div className="hero-tags">
           {tags.map((tag) => {
-            // Первое слово — число или сумма, оно выделяется цветом.
             const space = tag.lastIndexOf(' ');
-            const value = space > 0 ? tag.slice(0, space) : tag;
-            const label = space > 0 ? tag.slice(space + 1) : '';
             return (
               <span key={tag}>
-                <b>{value}</b> {label}
+                <b>{space > 0 ? tag.slice(0, space) : tag}</b> {space > 0 ? tag.slice(space + 1) : ''}
               </span>
             );
           })}
         </div>
+
         <div className="hero-cta">
           <Link className="btn btn-fire" href="/dauys">
             Дауыс беру
           </Link>
-          <Link className="btn btn-glass" href="/bilet">
-            Билет алу
+          <Link className="btn btn-glass" href="/duels">
+            Дуэльдер
           </Link>
         </div>
       </div>
-
-      <a className="spin-wrap" href="#verse" aria-label="Төмен">
-        <svg viewBox="0 0 100 100">
-          <defs>
-            <path id="circ" d="M50,50 m-38,0 a38,38 0 1,1 76,0 a38,38 0 1,1 -76,0" />
-          </defs>
-          <text fill="rgba(138,101,32,.6)" fontSize="10.5" letterSpacing="2.5">
-            <textPath href="#circ">МӨЛДІР ӨЛЕҢ · 2-МАУСЫМ · ПОЭЗИЯ ·</textPath>
-          </text>
-        </svg>
-        <span className="arr">↓</span>
-      </a>
     </section>
   );
 }
