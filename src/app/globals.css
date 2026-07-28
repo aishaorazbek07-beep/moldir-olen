@@ -171,6 +171,93 @@ section{position:relative;z-index:1;padding:76px 20px}
 .prize-line b{font-family:'Prata',serif;font-weight:400;font-size:19px;color:var(--gold);display:block}
 .prize-line small{color:var(--muted);font-size:12.5px}
 
+/* ============ арена: города друг напротив друга ============ */
+.arena{display:grid;gap:12px;margin-top:8px}
+.arena.cols-2{grid-template-columns:1fr 1fr}
+.arena.cols-3{grid-template-columns:repeat(3,1fr)}
+.arena.cols-4{grid-template-columns:repeat(2,1fr)}
+
+.vs-card{position:relative;overflow:hidden;border-radius:24px;
+  background:var(--card);border:1px solid var(--line);
+  padding:20px 14px 16px;text-align:center;
+  transition:border-color .4s,transform .25s ease}
+.vs-card.leading{border-color:rgba(255,194,75,.55);
+  box-shadow:0 0 0 1px rgba(255,194,75,.22), 0 14px 44px rgba(240,67,155,.16)}
+.vs-card .crown{display:block;position:absolute;top:12px;right:14px;z-index:2;font-size:18px;
+  animation:bob 2s ease-in-out infinite}
+.vs-card .ink{position:absolute;left:0;bottom:0;width:100%;z-index:0;
+  height:var(--fill,0%);transition:height 1.2s cubic-bezier(.2,.7,.2,1);
+  opacity:.28;pointer-events:none}
+.vs-card[data-c="1"] .ink{background:linear-gradient(180deg,transparent,var(--magenta))}
+.vs-card[data-c="2"] .ink{background:linear-gradient(180deg,transparent,var(--gold))}
+.vs-card[data-c="3"] .ink{background:linear-gradient(180deg,transparent,var(--moldir))}
+.vs-body{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+
+.vs-name{font-family:'Prata',serif;font-size:clamp(19px,5.4vw,26px);line-height:1.15}
+.vs-place{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:10px}
+.vs-count b{display:block;font-family:'Prata',serif;font-weight:400;
+  font-size:clamp(30px,9vw,44px);line-height:1;
+  background:linear-gradient(180deg,#fff,var(--moldir));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.vs-count span{display:block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);margin-top:4px}
+
+.vs-bar{width:100%;height:5px;border-radius:99px;background:rgba(255,255,255,.1);
+  margin:14px 0 6px;overflow:hidden}
+.vs-bar i{display:block;height:100%;border-radius:99px;transition:width 1s cubic-bezier(.2,.7,.2,1)}
+.vs-card[data-c="1"] .vs-bar i{background:linear-gradient(90deg,var(--magenta),#FF8AC2)}
+.vs-card[data-c="2"] .vs-bar i{background:linear-gradient(90deg,var(--gold),#FFE29A)}
+.vs-card[data-c="3"] .vs-bar i{background:linear-gradient(90deg,var(--moldir),#A6F3EE)}
+.vs-pct{font-size:12px;font-weight:800;color:var(--muted);margin-bottom:14px}
+
+.vs-card .btn-vote{padding:13px 10px;font-size:14px;margin-top:auto}
+.arena-total{text-align:center;color:var(--muted);font-size:13.5px;margin-top:16px}
+.arena-total b{color:var(--gold);font-family:'Prata',serif;font-weight:400;font-size:17px}
+
+@media (max-width:360px){
+  .vs-card{padding:16px 10px 14px}
+  .vs-card .btn-vote{font-size:13px;padding:12px 6px}
+}
+
+/* пакеты голосов */
+.packs{display:grid;grid-template-columns:repeat(auto-fit,minmax(72px,1fr));gap:8px;margin:4px 0 18px}
+.pack{display:flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer;
+  padding:12px 6px;border-radius:16px;font-family:'Inter',sans-serif;
+  background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--paper);
+  transition:border-color .2s,background .2s,transform .15s}
+.pack:active{transform:scale(.95)}
+.pack.on{border-color:var(--gold);background:rgba(255,194,75,.14)}
+.pack b{font-family:'Prata',serif;font-weight:400;font-size:21px;line-height:1}
+.pack span{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.pack i{font-style:normal;font-size:11.5px;font-weight:700;color:var(--gold);margin-top:3px}
+
+/* предупреждение про оплату */
+.warn-box{border-radius:18px;padding:16px;margin-bottom:18px;
+  background:rgba(240,67,155,.12);border:1px solid rgba(240,67,155,.45)}
+.warn-box b{display:block;font-size:14.5px;color:#FFB4D4;margin-bottom:6px}
+.warn-box p{font-size:13.5px;color:rgba(255,248,238,.85);line-height:1.55}
+.warn-box p b{display:inline;color:#FFB4D4}
+
+.recap{display:flex;gap:10px;margin-bottom:18px}
+.recap div{flex:1;text-align:center;padding:12px 6px;border-radius:14px;
+  background:rgba(255,255,255,.06);border:1px solid var(--line)}
+.recap span{display:block;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:4px}
+.recap b{font-family:'Prata',serif;font-weight:400;font-size:16px}
+
+.btn-wa{color:#062A1B;background:linear-gradient(95deg,#25D366,#7BE8A3);
+  box-shadow:0 8px 26px rgba(37,211,102,.34)}
+.btn-back{margin-top:8px;padding:12px 20px;font-size:14px}
+.again{margin-top:6px}
+
+/* «пока закрыто» */
+.closed-box{margin-top:24px;padding:28px 22px;border-radius:24px;text-align:center;
+  background:var(--card);border:1px dashed rgba(255,194,75,.45)}
+.closed-box .lock{font-size:34px;display:block;margin-bottom:12px}
+.closed-box h3{font-family:'Prata',serif;font-weight:400;font-size:21px;margin-bottom:8px}
+.closed-box p{color:var(--muted);font-size:14px;max-width:340px;margin:0 auto 18px}
+
 /* ============ дауыс беру ============ */
 .vote-note{display:inline-flex;align-items:center;gap:8px;margin:14px 0 22px;
   font-size:13px;font-weight:600;color:var(--gold);

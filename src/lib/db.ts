@@ -7,51 +7,47 @@ declare global {
   var __moldirSql: Sql | undefined;
 }
 
+/**
+ * Подключение к базе.
+ *
+ * Раньше здесь был Proxy, откладывавший создание клиента до первого запроса,
+ * чтобы `next build` не падал без DATABASE_URL. Оказалось, что через Proxy
+ * postgres.js получал теговый шаблон искажённым и отправлял пустой запрос:
+ * соединение уходило в никуда и не возвращалось в пул. После трёх открытий
+ * страницы сайт замирал целиком.
+ *
+ * Поэтому клиент обычный. Отсутствие DATABASE_URL на этапе сборки решается
+ * заглушкой: она бросает исключение при попытке запроса, а вся загрузка данных
+ * в этом проекте обёрнута в try и умеет работать на резервных данных из кода.
+ */
 function create(): Sql {
   const url = process.env.DATABASE_URL;
+
   if (!url) {
-    throw new Error(
-      'DATABASE_URL не задан. Возьмите строку подключения в Supabase → Project Settings → ' +
-        'Database → Connection pooling (режим Transaction, порт 6543).',
-    );
+    const fail = () => {
+      throw new Error(
+        'DATABASE_URL не задан. Возьмите строку подключения в Supabase → Project Settings → ' +
+          'Database → Connection pooling (режим Transaction, порт 6543).',
+      );
+    };
+    return new Proxy(fail as unknown as Sql, { apply: fail, get: fail });
   }
 
   return postgres(url, {
     // Пул Supabase в transaction-режиме не поддерживает prepared statements.
     prepare: false,
-    // На serverless держать много соединений нельзя — их быстро исчерпает пул.
-    max: 3,
+    // Запас на всплеск в прямом эфире; пул Supabase выдержит.
+    max: 10,
     idle_timeout: 20,
     connect_timeout: 10,
+    onnotice: () => {},
   });
 }
 
-let client: Sql | undefined;
+// В dev Next перезагружает модули на каждое изменение — без globalThis
+// соединения накапливались бы до исчерпания пула.
+export const sql: Sql = globalThis.__moldirSql ?? create();
 
-function getClient(): Sql {
-  // В dev Next перезагружает модули на каждое изменение — без globalThis
-  // соединения накапливались бы до исчерпания пула.
-  if (globalThis.__moldirSql) return globalThis.__moldirSql;
-
-  if (!client) {
-    client = create();
-    if (process.env.NODE_ENV !== 'production') globalThis.__moldirSql = client;
-  }
-
-  return client;
+if (process.env.NODE_ENV !== 'production') {
+  globalThis.__moldirSql = sql;
 }
-
-/**
- * Подключение создаётся при первом запросе, а не при импорте модуля.
- *
- * Иначе `next build` падал бы на сборе данных страниц: на этапе сборки базы
- * может не быть вовсе, а импорт всё равно выполняется.
- */
-export const sql = new Proxy((() => undefined) as unknown as Sql, {
-  apply(_target, _thisArg, args: unknown[]) {
-    return (getClient() as unknown as (...a: unknown[]) => unknown)(...args);
-  },
-  get(_target, prop) {
-    return (getClient() as unknown as Record<string | symbol, unknown>)[prop];
-  },
-}) as Sql;

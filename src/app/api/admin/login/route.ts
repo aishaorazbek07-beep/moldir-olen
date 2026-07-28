@@ -37,12 +37,17 @@ export async function POST(req: Request) {
 
   const res = NextResponse.json({ ok: true });
 
+  // Secure ставим по фактическому протоколу соединения, а не по режиму сборки:
+  // при NODE_ENV=production на локальном http такая cookie просто не сохранялась бы,
+  // а на боевом домене за прокси Vercel протокол виден в x-forwarded-proto.
+  const proto = req.headers.get('x-forwarded-proto') ?? new URL(req.url).protocol.replace(':', '');
+
   res.cookies.set({
     name: ADMIN_COOKIE,
     value: createSessionValue(secret, Date.now() + SESSION_TTL_MS),
     httpOnly: true,
     sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
+    secure: proto === 'https',
     path: '/',
     maxAge: Math.floor(SESSION_TTL_MS / 1000),
   });

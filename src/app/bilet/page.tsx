@@ -1,15 +1,25 @@
 import type { Metadata } from 'next';
-import { TicketSection } from '@/components/TicketSection';
+import { ClosedSection } from '@/components/ClosedSection';
+import { loadSettings } from '@/lib/content';
 
 export const metadata: Metadata = {
   title: 'Билет алу | Мөлдір өлең',
-  description: 'Поэзия кештеріне Kaspi арқылы билет алыңыз.',
+  description: 'Поэзия кештеріне билет.',
 };
 
-export default function BiletPage() {
+export const dynamic = 'force-dynamic';
+
+export default async function BiletPage() {
+  const { settings } = await loadSettings();
+
   return (
     <section className="page-top">
-      <TicketSection />
+      <ClosedSection
+        eyebrow="Поэзия кештері"
+        title="Билет"
+        accent="алыңыз"
+        notice={settings.closedNotice}
+      />
     </section>
   );
 }

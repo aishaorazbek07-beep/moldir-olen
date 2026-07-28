@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import { useEffect, useRef } from 'react';
@@ -21,7 +21,7 @@ function Letters({ word, delay, accentIndex = -1 }: { word: string; delay: numbe
   );
 }
 
-export function Hero() {
+export function Hero({ tagline, tags }: { tagline: string; tags: string[] }) {
   const t1 = useRef<HTMLDivElement>(null);
   const t2 = useRef<HTMLDivElement>(null);
 
@@ -59,7 +59,7 @@ export function Hero() {
       <div className="side-verse">сөз · сахна · халық</div>
 
       <div className="hero-inner">
-        <span className="hero-eyebrow">Ұлттық поэзиялық жоба</span>
+        <span className="hero-eyebrow">{tagline}</span>
         <div className="title">
           <div className="row t1" ref={t1}>
             <Letters word="МӨЛДІР" delay={0.3} />
@@ -69,15 +69,17 @@ export function Hero() {
           </div>
         </div>
         <div className="hero-tags">
-          <span>
-            <b>20</b> өңір
-          </span>
-          <span>
-            <b>60</b> ақын
-          </span>
-          <span>
-            <b>3 000 000 ₸</b> бас жүлде
-          </span>
+          {tags.map((tag) => {
+            // Первое слово — число или сумма, оно выделяется цветом.
+            const space = tag.lastIndexOf(' ');
+            const value = space > 0 ? tag.slice(0, space) : tag;
+            const label = space > 0 ? tag.slice(space + 1) : '';
+            return (
+              <span key={tag}>
+                <b>{value}</b> {label}
+              </span>
+            );
+          })}
         </div>
         <div className="hero-cta">
           <Link className="btn btn-fire" href="/dauys">

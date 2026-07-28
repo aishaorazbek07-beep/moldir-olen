@@ -3,21 +3,25 @@ import { Hero } from '@/components/Hero';
 import { Reveal } from '@/components/Reveal';
 import { Ribbon } from '@/components/Ribbon';
 import { VerseScroll } from '@/components/VerseScroll';
-import { VOTE_PRICE } from '@/lib/config';
+import { loadSettings } from '@/lib/content';
 import { tenge } from '@/lib/format';
 
-const TEASERS = [
-  { href: '/joba', title: 'Жоба туралы', note: '20 өңір · 60 ақын · 3 000 000 ₸ бас жүлде' },
-  { href: '/dauys', title: 'Дауыс беру', note: `Суперфинал · 1 дауыс ${tenge(VOTE_PRICE)}` },
-  { href: '/bilet', title: 'Билет алу', note: 'Поэзия кештеріне билет' },
-  { href: '/otinim', title: 'Өтінім тапсыру', note: '2-маусымға қатысуға өтінім' },
-  { href: '/format', title: 'Дода форматы', note: 'Іріктеуден суперфиналға дейін' },
-];
+export const dynamic = 'force-dynamic';
 
-export default function HomePage() {
+export default async function HomePage() {
+  const { settings } = await loadSettings();
+
+  const teasers = [
+    { href: '/dauys', title: 'Дауыс беру', note: `${settings.voteEyebrow} · 1 дауыс ${tenge(settings.votePrice)}`, open: true },
+    { href: '/joba', title: 'Жоба туралы', note: settings.heroTags.join(' · '), open: true },
+    { href: '/format', title: 'Дода форматы', note: 'Іріктеуден суперфиналға дейін', open: true },
+    { href: '/bilet', title: 'Билет алу', note: 'Әзірге жабық', open: false },
+    { href: '/otinim', title: 'Өтінім тапсыру', note: 'Әзірге жабық', open: false },
+  ];
+
   return (
     <>
-      <Hero />
+      <Hero tagline={settings.heroTagline} tags={settings.heroTags} />
       <Ribbon />
       <VerseScroll />
 
@@ -27,19 +31,19 @@ export default function HomePage() {
           <h2 className="h2">
             Не <em>істейміз?</em>
           </h2>
-          <p className="lead">Керек бөлімді таңдаңыз - әрқайсысы бөлек бетте.</p>
+          <p className="lead">Керек бөлімді таңдаңыз — әрқайсысы бөлек бетте.</p>
         </Reveal>
 
         <Reveal>
           <div className="teasers">
-            {TEASERS.map((t) => (
-              <Link className="teaser" href={t.href} key={t.href}>
+            {teasers.map((t) => (
+              <Link className={`teaser${t.open ? '' : ' muted'}`} href={t.href} key={t.href}>
                 <span>
                   <b>{t.title}</b>
                   <small>{t.note}</small>
                 </span>
                 <span className="go" aria-hidden="true">
-                  →
+                  {t.open ? '→' : '🔒'}
                 </span>
               </Link>
             ))}

@@ -1,15 +1,25 @@
 import type { Metadata } from 'next';
-import { ApplySection } from '@/components/ApplySection';
+import { ClosedSection } from '@/components/ClosedSection';
+import { loadSettings } from '@/lib/content';
 
 export const metadata: Metadata = {
   title: 'Өтінім тапсыру | Мөлдір өлең',
-  description: 'Мөлдір өлең жобасының 2-маусымына өтінім қалдырыңыз.',
+  description: 'Мөлдір өлең жобасына өтінім.',
 };
 
-export default function OtinimPage() {
+export const dynamic = 'force-dynamic';
+
+export default async function OtinimPage() {
+  const { settings } = await loadSettings();
+
   return (
     <section className="page-top">
-      <ApplySection />
+      <ClosedSection
+        eyebrow="2-маусым"
+        title="Өтінім"
+        accent="тапсыру"
+        notice={settings.closedNotice}
+      />
     </section>
   );
 }

@@ -1,18 +1,22 @@
 import { NextResponse } from 'next/server';
-import { loadTeamRows } from '@/lib/repo';
-import { publicTeamView, withPercentages } from '@/lib/votes';
+import { loadTeams } from '@/lib/content';
+import { loadCounts } from '@/lib/repo';
+import { buildTeams } from '@/lib/votes';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 /**
- * Публичные данные по командам.
+ * Публичные данные по городам.
  *
- * Через publicTeamView, а не напрямую из базы: наружу уходит только итоговое
- * число голосов, без разбивки «оплачено / корректировка».
+ * Через buildTeams, а не напрямую из базы: наружу уходит только итоговое число
+ * голосов, без разбивки «заявлено / подтверждено / корректировка».
  */
 export async function GET() {
-  const teams = withPercentages((await loadTeamRows()).map(publicTeamView));
+  const [{ teams }, { counts }] = await Promise.all([loadTeams(), loadCounts()]);
 
-  return NextResponse.json({ teams }, { headers: { 'Cache-Control': 'no-store' } });
+  return NextResponse.json(
+    { teams: buildTeams(teams, counts) },
+    { headers: { 'Cache-Control': 'no-store' } },
+  );
 }

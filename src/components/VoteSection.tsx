@@ -1,141 +1,118 @@
-﻿'use client';
+'use client';
 
-import { useState } from 'react';
-import { MAX_VOTES_PER_PAYMENT, VOTE_PRICE } from '@/lib/config';
+import { useEffect, useState } from 'react';
 import { fmt, tenge } from '@/lib/format';
 import type { TeamWithStats } from '@/lib/votes';
 import { Reveal } from './Reveal';
-import { FailScreen, PhoneField, Sheet, SheetCta, WaitingScreen } from './Sheet';
-import { TEST_MODE, usePayment } from './usePayment';
+import { VoteFlow } from './VoteFlow';
 
-const ROMAN = ['I', 'II', 'III', 'IV', 'V'];
-
-export function VoteSection({ initialTeams }: { initialTeams: TeamWithStats[] }) {
+export function VoteSection({
+  initialTeams,
+  votePrice,
+  whatsappBase,
+  eyebrow,
+  title,
+  lead,
+  note,
+}: {
+  initialTeams: TeamWithStats[];
+  votePrice: number;
+  whatsappBase: string;
+  eyebrow: string;
+  title: string;
+  lead: string;
+  note: string;
+}) {
   const [teams, setTeams] = useState(initialTeams);
-  const [activeTeam, setActiveTeam] = useState<TeamWithStats | null>(null);
-  const [qty, setQty] = useState(1);
-  const [phone, setPhone] = useState('+7 ');
+  const [activeSlug, setActiveSlug] = useState<string | null>(null);
 
-  const payment = usePayment();
+  // Счётчики подтягиваются сами: в эфире цифры меняются, а зритель редко
+  // догадывается обновить страницу.
+  useEffect(() => {
+    if (activeSlug) return; // пока человек платит, счётчики под ним не дёргаем
 
-  const openVote = (team: TeamWithStats) => {
-    setActiveTeam(team);
-    setQty(1);
-    payment.reset();
-  };
+    const tick = async () => {
+      try {
+        const res = await fetch('/api/teams', { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = (await res.json()) as { teams?: TeamWithStats[] };
+        if (data.teams?.length) setTeams(data.teams);
+      } catch {
+        // молча: обновим на следующем круге
+      }
+    };
 
-  const closeSheet = () => {
-    // Если оплата прошла, счётчики уже пришли в ответе статуса — забираем их.
-    if (payment.teams) setTeams(payment.teams);
-    setActiveTeam(null);
-    payment.reset();
-  };
+    const timer = setInterval(() => void tick(), 15000);
+    return () => clearInterval(timer);
+  }, [activeSlug]);
 
-  const changeQty = (delta: number) => {
-    setQty((prev) => Math.min(MAX_VOTES_PER_PAYMENT, Math.max(1, prev + delta)));
-  };
-
-  const submit = () => {
-    if (!activeTeam) return;
-    void payment.start('/api/vote/start', { teamId: activeTeam.id, quantity: qty, phone });
-  };
-
-  const shownTeams = payment.teams ?? teams;
-  const busy = payment.phase === 'starting';
+  const total = teams.reduce((sum, t) => sum + t.votes, 0);
 
   return (
     <>
       <Reveal>
-        <span className="eyebrow">Суперфинал · 30 қыркүйек</span>
-        <h2 className="h2">
-          Дауыс <em>беріңіз</em>
-        </h2>
-        <p className="lead">Үш команда - бір тақ. Сіздің дауысыңыз тағдырды шешеді.</p>
+        <span className="eyebrow">{eyebrow}</span>
+        <h2 className="h2">{title}</h2>
+        <p className="lead">{lead}</p>
         <div className="vote-note">
-          ✦ 1 дауыс - {tenge(VOTE_PRICE)} · Kaspi арқылы төленеді
+          ✦ 1 дауыс — {tenge(votePrice)} · {note}
         </div>
       </Reveal>
 
-      <div className="teams">
-        {shownTeams.map((team, i) => (
-          <Reveal key={team.id}>
+      <Reveal>
+        <div className={`arena cols-${Math.min(teams.length, 4)}`}>
+          {teams.map((team) => (
             <div
-              className={`team${team.isLeader ? ' lead-team' : ''}`}
+              key={team.slug}
+              className={`vs-card${team.isLeader ? ' leading' : ''}`}
               data-c={team.colorIndex}
             >
-              <span className="crown">👑</span>
               <div className="ink" style={{ height: `${team.fillPercent}%` }} />
-              <div className="team-top">
-                <div className="team-badge">{ROMAN[i] ?? String(i + 1)}</div>
-                <div>
-                  <div className="team-name serif">{team.name}</div>
-                  <div className="team-place">{team.placeLabel}</div>
-                </div>
-              </div>
-              <div className="team-meta">
-                <div className="votes">
+              {team.isLeader ? <span className="crown">👑</span> : null}
+
+              <div className="vs-body">
+                <div className="vs-name serif">{team.name}</div>
+                <div className="vs-place">{team.placeLabel}</div>
+
+                <div className="vs-count">
                   <b>{fmt(team.votes)}</b>
-                  <i className="pct">{team.percent}%</i>
                   <span>дауыс</span>
                 </div>
-                <button className="btn btn-fire btn-vote" onClick={() => openVote(team)} type="button">
+
+                <div className="vs-bar">
+                  <i style={{ width: `${team.percent}%` }} />
+                </div>
+                <div className="vs-pct">{team.percent}%</div>
+
+                <button
+                  className="btn btn-fire btn-block btn-vote"
+                  onClick={() => setActiveSlug(team.slug)}
+                  type="button"
+                >
                   Дауыс беру
                 </button>
               </div>
             </div>
-          </Reveal>
-        ))}
-      </div>
+          ))}
+        </div>
+      </Reveal>
 
-      <Sheet open={activeTeam !== null} onClose={closeSheet}>
-        {activeTeam === null ? null : payment.phase === 'form' || payment.phase === 'starting' ? (
-          <>
-            <h3 className="serif">{activeTeam.name}</h3>
-            <p className="sub">
-              1 дауыс - {tenge(VOTE_PRICE)}. Бірнеше дауыс беруге болады.
-            </p>
+      {teams.length > 1 ? (
+        <p className="arena-total">
+          Барлығы <b>{fmt(total)}</b> дауыс берілді
+        </p>
+      ) : null}
 
-            <div className="qty">
-              <button onClick={() => changeQty(-1)} disabled={busy} type="button" aria-label="Азайту">
-                −
-              </button>
-              <b>{qty}</b>
-              <button onClick={() => changeQty(1)} disabled={busy} type="button" aria-label="Көбейту">
-                +
-              </button>
-            </div>
-
-            <div className="sum">
-              <span>Жалпы сома</span>
-              <b>{tenge(qty * VOTE_PRICE)}</b>
-            </div>
-
-            <PhoneField value={phone} onChange={setPhone} disabled={busy} />
-
-            <SheetCta>
-              {payment.error ? <p className="form-error">{payment.error}</p> : null}
-              <button className="btn btn-fire btn-block" onClick={submit} disabled={busy} type="button">
-                {busy ? 'Шот жіберілуде...' : `${tenge(qty * VOTE_PRICE)} · Kaspi арқылы төлеу`}
-              </button>
-            </SheetCta>
-          </>
-        ) : payment.phase === 'waiting' ? (
-          <WaitingScreen showTestButton={TEST_MODE} onTestPay={() => void payment.testPay()} />
-        ) : payment.phase === 'paid' ? (
-          <div className="pay-ok">
-            <div className="check">✓</div>
-            <h3 className="serif">Дауысыңыз қабылданды!</h3>
-            <p className="sub">
-              {activeTeam.name} командасына {qty} дауыс берілді. Рахмет!
-            </p>
-            <button className="btn btn-glass btn-block" onClick={closeSheet} type="button">
-              Жабу
-            </button>
-          </div>
-        ) : (
-          <FailScreen message={payment.error ?? 'Төлем өтпеді'} onRetry={payment.reset} />
-        )}
-      </Sheet>
+      {activeSlug ? (
+        <VoteFlow
+          teams={teams}
+          onTeamsChange={setTeams}
+          activeSlug={activeSlug}
+          onClose={() => setActiveSlug(null)}
+          whatsappBase={whatsappBase}
+          votePrice={votePrice}
+        />
+      ) : null}
     </>
   );
 }
