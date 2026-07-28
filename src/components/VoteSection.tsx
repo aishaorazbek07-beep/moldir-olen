@@ -62,7 +62,7 @@ export function VoteSection({
         <QuillDivider />
       </Reveal>
 
-      <Reveal>
+      <Reveal className="arena-wrap">
         <div className={`arena cols-${Math.min(teams.length, 4)}`}>
           {teams.map((team) => (
             <div
